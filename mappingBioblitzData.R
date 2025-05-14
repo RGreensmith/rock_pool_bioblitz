@@ -86,11 +86,15 @@ may_records <- subset(inat_data, time_observed_at >= as_datetime("2025-05-01"))
 
 # Get images for records for first record
 
-first_beadlet_record_images <- beadlet_data$photos[[1]] # multiple images for this record
+# multiple images for this record
+first_beadlet_record_images <- beadlet_data$photos[[1]]
 
-browseURL(first_beadlet_record_images$large_url[1]) # first image for this record
-browseURL(first_beadlet_record_images$large_url[2]) # second image for this record
-browseURL(first_beadlet_record_images$square_url[1]) # thumbnail image for this record
+# first image for this record
+browseURL(first_beadlet_record_images$large_url[1])
+# second image for this record
+browseURL(first_beadlet_record_images$large_url[2])
+# thumbnail image for this record
+browseURL(first_beadlet_record_images$square_url[1])
 
 # Get images for taxa
 source("Scripts/Ben's R iNat functions.R")
