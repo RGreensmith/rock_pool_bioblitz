@@ -1,2 +1,2 @@
 # rock_pool_bioblitz
-For analysing data collected during the iNaturalist rock pool Bioblitz
+This project is for analysing data collected during the iNaturalist Rockpool Project Bioblitz.
