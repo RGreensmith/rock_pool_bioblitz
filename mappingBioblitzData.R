@@ -50,6 +50,36 @@ beadlet_data <- subset(inat_data,
                         taxon.common_name.name == "Atlantic Beadlet Anemone")
 nrow(beadlet_data)
 
+# --------------------------------------------------
+
+# 3. Map of Anenomes
+
+# --------------------------------------------------
+library(leaflet)
+library(scales)
+
+# Create a color palette based on scientific names
+species_colors <- colorFactor(
+    palette = hue_pal()(length(unique(natbioblitz_nns$taxon.common_name.name))),
+    domain = natbioblitz_nns$taxon.common_name.name
+)
+
+leaflet(data = natbioblitz_nns) %>%
+    addProviderTiles(providers$Esri.OceanBasemap) %>%
+    addCircleMarkers(~ as.numeric(longitude), ~ as.numeric(latitude),
+        radius = 5,
+        color = ~ species_colors(taxon.common_name.name),
+        popup = ~ paste("Species:", taxon.common_name.name, " Date:", time_observed_at)
+    ) %>%
+    addLegend("bottomright",
+        colors = scales::hue_pal()(length(unique(natbioblitz_nns$taxon.common_name.name))),
+        labels = unique(natbioblitz_nns$taxon.common_name.name),
+        title = "Species"
+    )
+
+# --------------------------------------------------
+
+
 # Filter by ID status (e.g., Needs ID)
 research_grade_data <- subset(inat_data, quality_grade == "research")
 nrow(research_grade_data)
@@ -74,9 +104,6 @@ View(natbioblitz_nns)
 # FOLLOW-UP ANALYSIS SCRIPT - NON-NATIVE MARINE SPECIES
 
 # ==============================================
-
-library(leaflet)
-library(scales)
 
 # --------------------------------------------------
 
