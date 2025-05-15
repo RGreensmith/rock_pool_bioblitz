@@ -15,7 +15,7 @@ library(lubridate)
 
 # --------------------------------------------------
 
-# Step 2: Download Data from the iNaturalist Project
+# Step 1: Download Data from the iNaturalist Project
 
 # --------------------------------------------------
 
@@ -39,26 +39,9 @@ inat_data$time_observed_at <- ymd_hms(inat_data$time_observed_at)
 last_update <- max(inat_data$updated_at)
 cat("Last update:", as.character(last_update), "\n")
 
-
 # --------------------------------------------------
 
-# Step 3: Compare Exported Data and Downloaded Data
-
-# --------------------------------------------------
-
-# Identify updated and new records in the downloaded data
-
-new_records <- subset(inat_data, !id %in% exported_data$id)
-cat("Number of new records since export:", nrow(new_records), "\n")
-
-updated_records <- subset(inat_data, updated_at > max(exported_data$updated_at)
-                        & id %in% exported_data$id)
-
-cat("Number of updated records since export:", nrow(updated_records), "\n")
-
-# --------------------------------------------------
-
-# Step 4: Filtering Data
+# Step 2: Filtering Data
 
 # --------------------------------------------------
 
@@ -67,58 +50,23 @@ beadlet_data <- subset(inat_data,
                         taxon.common_name.name == "Atlantic Beadlet Anemone")
 nrow(beadlet_data)
 
-
-# Filter by location (e.g., Falmouth)
-falmouth_data <- subset(inat_data, place_guess == "Falmouth, UK")
-nrow(falmouth_data)
-
 # Filter by ID status (e.g., Needs ID)
 research_grade_data <- subset(inat_data, quality_grade == "research")
-
-# Filter by date range (e.g., records from 1st onwards)
-may_records <- subset(inat_data, time_observed_at >= as_datetime("2025-05-01"))
+nrow(research_grade_data)
 
 # --------------------------------------------------
 
-# Step 5: Getting Images
-
-# --------------------------------------------------
-
-# Get images for records for first record
-
-# multiple images for this record
-first_beadlet_record_images <- beadlet_data$photos[[1]]
-
-# first image for this record
-browseURL(first_beadlet_record_images$large_url[1])
-# second image for this record
-browseURL(first_beadlet_record_images$large_url[2])
-# thumbnail image for this record
-browseURL(first_beadlet_record_images$square_url[1])
-
-# Get images for taxa
-source("Scripts/Ben's R iNat functions.R")
-default_beadlet_image <- get_taxon_image("Beadlet anemone")
-
-browseURL(default_beadlet_image) # default image for this species
-
-# --------------------------------------------------
-
-# Step 6: Linking to Non-native Species List
+# Step 3: Linking to Non-native Species List
 
 # --------------------------------------------------
 
 # Load the non-native species list
-
 non_native_species <- read.csv("data/UK marine NNS.csv")
 
-View(non_native_species)
-
 # Match observations against non-native species list
-
 natbioblitz_nns <- subset(inat_data, taxon.id %in% non_native_species$inat_id)
 cat("Number of non-native species records found:", nrow(natbioblitz_nns), "\n")
-
+View(natbioblitz_nns)
 # --------------------------------------------------
 
 # ==============================================
@@ -142,38 +90,26 @@ barplot(sort(species_count, decreasing = T), cex.names = 0.8)
 
 # --------------------------------------------------
 
-# 2. Bar Plot - Records per day (All Species)
-
-# --------------------------------------------------
-
-# Extract month from observed_on
-
-recs_per_day <- table(inat_data$observed_on)
-
-barplot(recs_per_day, names.arg = format(as.Date(names(recs_per_day)), "%d-%m"))
-
-# --------------------------------------------------
-
 # 3. Map of Non-native Species
 
 # --------------------------------------------------
 
 # Create a color palette based on scientific names
 species_colors <- colorFactor(
-    palette = hue_pal()(length(unique(natbioblitz_nns$taxon.name))),
-    domain = natbioblitz_nns$taxon.name
+    palette = hue_pal()(length(unique(natbioblitz_nns$taxon.common_name.name))),
+    domain = natbioblitz_nns$taxon.common_name.name
 )
 
 leaflet(data = natbioblitz_nns) %>%
     addProviderTiles(providers$Esri.OceanBasemap) %>%
     addCircleMarkers(~ as.numeric(longitude), ~ as.numeric(latitude),
         radius = 5,
-        color = ~ species_colors(taxon.name),
-        popup = ~ paste("Species:", taxon.name, " Date:", time_observed_at)
+        color = ~ species_colors(taxon.common_name.name),
+        popup = ~ paste("Species:", taxon.common_name.name, " Date:", time_observed_at)
     ) %>%
     addLegend("bottomright",
-        colors = scales::hue_pal()(length(unique(natbioblitz_nns$taxon.name))),
-        labels = unique(natbioblitz_nns$taxon.name),
+        colors = scales::hue_pal()(length(unique(natbioblitz_nns$taxon.common_name.name))),
+        labels = unique(natbioblitz_nns$taxon.common_name.name),
         title = "Species"
     )
 
