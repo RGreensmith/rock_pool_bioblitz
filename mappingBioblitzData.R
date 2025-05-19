@@ -17,9 +17,6 @@ project_slug <- "brpc-national-bioblitz-2025-practice"
 # Download data using the rinat package
 inat_data <- get_inat_obs_project(project_slug)
 
-# View the new data set
-View(inat_data)
-
 # Convert observed_on to date-time for comparison
 inat_data$updated_at <- ymd_hms(inat_data$updated_at)
 inat_data$time_observed_at <- ymd_hms(inat_data$time_observed_at)
@@ -30,52 +27,72 @@ cat("Last update:", as.character(last_update), "\n")
 # ------------------------------------------------------------------------------
 #                     Adding World Register of Marine Species Data
 # ------------------------------------------------------------------------------
-install.packages("jsonlite")
-install.packages("dplyr")
 library(jsonlite)
 library(dplyr)
-
-cockle = GET('https://www.marinespecies.org/rest/AphiaRecordsByName/Cerastoderma%20edule?like=true&marine_only=false&extant_only=true&offset=1')
-cockle_content = httr::content(cockle, as = 'text')
-cockle_content_from_json = jsonlite::fromJSON(cockle_content)
-cockle_order = cockle_content_from_json$order[1]
 
 # ------------------------------------------------------------------------------
 #        Add and fill columns for Order and Family to iNaturalist dataframe
 # ------------------------------------------------------------------------------
-# Adding new columns to inat_data for taxa Order and Family
+# Create new empty columns to merge with inat_data for taxonomy data
+taxon.kingdom = rep(NA, times = length(inat_data[,1]))
+taxon.phylum = rep(NA, times = length(inat_data[,1]))
+taxon.class = rep(NA, times = length(inat_data[,1]))
 taxon.order = rep(NA, times = length(inat_data[,1]))
 taxon.family = rep(NA, times = length(inat_data[,1]))
 
-inat_data = merge(inat_data,cbind(taxon.order,taxon.family))
+# Merge the inat_data dataframe with the new taxon columns
+inat_data = cbind(inat_data,
+                  taxon.kingdom,
+                  taxon.phylum,
+                  taxon.class,
+                  taxon.order,
+                  taxon.family
+                  )
 
-# clean global environment
-rm(taxon.order,taxon.family)
+# clean up the global environment
+rm(taxon.kingdom,
+   taxon.phylum,
+   taxon.class,
+   taxon.order,
+   taxon.family
+   )
 
-# functions to try in loop below (in case species is not in the WoRMS)
-tryOrder = function (sppNm) {
-  taxOrder =
-    wm_records_taxamatch(name = inat_data$taxon.name[sppNm])[[1]]$order
-  return(taxOrder)
-}
-tryFamily = function (sppNm) {
-  taxFamily =
-    wm_records_taxamatch(name = inat_data$taxon.name[sppNm])[[1]]$family
-  return(taxFamily)
-}
-l = length(inat_data[,4])
-# filling in new inat_data columns for taxa Order and Family
-for (a in 1:l) {
-    
-    taxOrder = "NA"
-    taxFamily = "NA"
-    
-    inat_data$taxon.order[a] = try(tryOrder(a))
-    inat_data$taxon.family[a] = try(tryFamily(a))
-    
-    # fail-safe for filling rows
-    rm(taxOrder,taxFamily)
-  
+# filling in new inat_data columns with taxonomic information from WoRMS
+l = length(inat_data[,1])
+for (a in 130:l) {
+    if (is.na(inat_data$taxon.rank[a])==FALSE && inat_data$taxon.rank[a]=="species"){
+      
+      binomClassNm = inat_data$taxon.name[a]
+      binomClassNmSplit = strsplit(binomClassNm,"[ ]")
+
+      genus = binomClassNmSplit[[1]][1]
+      species = binomClassNmSplit[[1]][2]
+      
+      api = paste("https://www.marinespecies.org/rest/AphiaRecordsByName/",
+                  genus,
+                  "%20",
+                  species,
+                  "?like=true&marine_only=false&extant_only=true&offset=1",sep = "")
+      taxonInfo = GET(api)
+      taxonInfoContent = httr::content(taxonInfo, as = 'text')
+      if(object.size(taxonInfoContent)>112) {
+        taxonInfoContentJSON = jsonlite::fromJSON(taxonInfoContent)
+        
+        kin = taxonInfoContentJSON$kingdom[1]
+        phy = taxonInfoContentJSON$phylum[1]
+        cls = taxonInfoContentJSON$class[1]
+        ord = taxonInfoContentJSON$order[1]
+        fam = taxonInfoContentJSON$family[1]
+        
+        inat_data$taxon.kingdom[a] = kin
+        inat_data$taxon.phylum[a] = phy
+        inat_data$taxon.class[a] = cls
+        inat_data$taxon.order[a] = ord
+        inat_data$taxon.family[a] = fam
+      } else {
+        inat_data$taxon.kingdom[a] = "taxon info not retrieved"
+      }
+    }
 }
 
 # ==============================================================================
