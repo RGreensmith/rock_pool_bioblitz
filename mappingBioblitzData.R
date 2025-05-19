@@ -150,6 +150,9 @@ leaflet(data = anemone_data) %>%
 anemone_data <- table(anemone_data$taxon.common_name.name)
 barplot(sort(anemone_data, decreasing = T), horiz = TRUE, cex.names = 0.9)
 
+# bar plot of records by Phyla
+taxonPhylum <- table(inat_data$taxon.phylum)
+barplot(sort(taxonPhylum, decreasing = T), horiz = TRUE, cex.names = 0.5,las = 2)
 
 # ==============================================================================
 #                             NON-NATIVE MARINE SPECIES
