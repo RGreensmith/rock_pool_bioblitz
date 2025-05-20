@@ -163,12 +163,40 @@ barplot(sort(anemone_data, decreasing = T),
 ################################################################################
 inat_data_filtered = inat_data
 inat_data_filtered = filter(inat_data_filtered,marine == 1 | brackish == 1)
+inat_data_filtered = filter(inat_data_filtered,taxon.class == "Gastropoda")
 
-# bar plot of records by marine and brackish species
-df <- table(inat_data_filtered$taxon.order)
-barplot(sort(df, decreasing = T),
-        horiz = TRUE, cex.names = 0.5,las = 2)
 
+
+# df=as.data.frame(df)
+# df = df[df$Freq != 0,]
+
+par(mfrow=c(1,3))
+
+df <- table(inat_data_filtered$taxon.kingdom)
+barplot(sort(df, decreasing = F),
+        horiz = TRUE, cex.names = 0.9,las = 2,
+        main = "Records per Kingdom")
+
+df <- table(inat_data_filtered$taxon.phylum)
+par(mar=c(2,5,2,1))
+barplot(sort(df, decreasing = F),
+        horiz = TRUE, cex.names = 0.9,las = 2,
+        main = "Records per Phylum")
+
+df <- table(inat_data_filtered$taxon.class)
+barplot(sort(df, decreasing = F),
+        horiz = TRUE, cex.names = 0.7,las = 2,
+        main = "Records per Class")
+par(mfrow=c(3,3))
+df <- table(inat_data_filtered$taxon.common_name.name)
+par(mar=c(2,10,2,1))
+barplot(sort(df, decreasing = F),
+        horiz = TRUE, cex.names = 0.7,las = 2,
+        main = "Records of Gastropoda species")
+dev.off()
+
+
+####### map ##################
 # Create a color palette based on common names
 species_colors <- colorFactor(
   palette = hue_pal()(length(unique(inat_data_filtered$taxon.phylum))),
