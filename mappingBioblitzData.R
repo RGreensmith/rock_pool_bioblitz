@@ -39,6 +39,10 @@ taxon.phylum = rep(NA, times = length(inat_data[,1]))
 taxon.class = rep(NA, times = length(inat_data[,1]))
 taxon.order = rep(NA, times = length(inat_data[,1]))
 taxon.family = rep(NA, times = length(inat_data[,1]))
+marine = rep(NA, times = length(inat_data[,1]))
+brackish = rep(NA, times = length(inat_data[,1]))
+freshwater = rep(NA, times = length(inat_data[,1]))
+terrestrial = rep(NA, times = length(inat_data[,1]))
 
 # Merge the inat_data dataframe with the new taxon columns
 inat_data = cbind(inat_data,
@@ -46,7 +50,11 @@ inat_data = cbind(inat_data,
                   taxon.phylum,
                   taxon.class,
                   taxon.order,
-                  taxon.family
+                  taxon.family,
+                  marine,
+                  brackish,
+                  freshwater,
+                  terrestrial
                   )
 
 # clean up the global environment
@@ -54,12 +62,16 @@ rm(taxon.kingdom,
    taxon.phylum,
    taxon.class,
    taxon.order,
-   taxon.family
+   taxon.family,
+   marine,
+   brackish,
+   freshwater,
+   terrestrial
    )
 
 # filling in new inat_data columns with taxonomic information from WoRMS
 l = length(inat_data[,1])
-for (a in 130:l) {
+for (a in 1:l) {
     if (is.na(inat_data$taxon.rank[a])==FALSE && inat_data$taxon.rank[a]=="species"){
       
       binomClassNm = inat_data$taxon.name[a]
@@ -75,20 +87,28 @@ for (a in 130:l) {
                   "?like=true&marine_only=false&extant_only=true&offset=1",sep = "")
       taxonInfo = GET(api)
       taxonInfoContent = httr::content(taxonInfo, as = 'text')
+      
       if(object.size(taxonInfoContent)>112) {
         taxonInfoContentJSON = jsonlite::fromJSON(taxonInfoContent)
         
-        kin = taxonInfoContentJSON$kingdom[1]
-        phy = taxonInfoContentJSON$phylum[1]
-        cls = taxonInfoContentJSON$class[1]
-        ord = taxonInfoContentJSON$order[1]
-        fam = taxonInfoContentJSON$family[1]
+        inat_data$taxon.kingdom[a] = taxonInfoContentJSON$kingdom[1]
+        inat_data$taxon.phylum[a] = taxonInfoContentJSON$phylum[1]
+        inat_data$taxon.class[a] = taxonInfoContentJSON$class[1]
+        inat_data$taxon.order[a] = taxonInfoContentJSON$order[1]
+        inat_data$taxon.family[a] = taxonInfoContentJSON$family[1]
         
-        inat_data$taxon.kingdom[a] = kin
-        inat_data$taxon.phylum[a] = phy
-        inat_data$taxon.class[a] = cls
-        inat_data$taxon.order[a] = ord
-        inat_data$taxon.family[a] = fam
+        if(is.na(taxonInfoContentJSON$isMarine[1])==FALSE) {
+          inat_data$marine[a] = taxonInfoContentJSON$isMarine[1]
+        }
+        if(is.na(taxonInfoContentJSON$isBrackish[1])==FALSE) {
+          inat_data$brackish[a] = taxonInfoContentJSON$isBrackish[1]
+        }
+        if(is.na(taxonInfoContentJSON$isFreshwater[1])==FALSE) {
+          inat_data$freshwater[a] = taxonInfoContentJSON$isFreshwater[1]
+        }
+        if(is.na(taxonInfoContentJSON$isTerrestrial[1])==FALSE) {
+          inat_data$terrestrial[a] = taxonInfoContentJSON$isTerrestrial[1]
+        }
       } else {
         inat_data$taxon.kingdom[a] = "taxon info not retrieved"
       }
@@ -99,29 +119,17 @@ for (a in 130:l) {
 #                                     ANEMONES
 # ==============================================================================
 
-# ------------------------------------------------------------------------------
-#                       Step 1: Filtering Anemone Data
-# ------------------------------------------------------------------------------
-library(dplyr)
 
-anemoneNms = c(
-    "Atlantic Beadlet Anemone",
-    "Strawberry Anemone",
-    "Gem Anemone",
-    "Daisy Anemone",
-    "snakelocks anemone",
-    "Dahlia Anemone",
-    "Plumose Anemone",
-    "Pimplet Anemone"
-)
-anemone_data <- filter(inat_data, taxon.common_name.name %in% anemoneNms)
-nrow(anemone_data)
 
 # ------------------------------------------------------------------------------
-#                             Step 2: Map of Anemones
+#                             Step 1: Map of Anemones
 # ------------------------------------------------------------------------------
 library(leaflet)
 library(scales)
+
+# Filter anemone data
+anemone_data <- filter(inat_data, taxon.order %in% "Actiniaria")
+nrow(anemone_data)
 
 # Create a color palette based on common names
 species_colors <- colorFactor(
@@ -148,12 +156,39 @@ leaflet(data = anemone_data) %>%
 #                 Step 3: Bar Plot - Records per Species (anemones)
 # ------------------------------------------------------------------------------
 anemone_data <- table(anemone_data$taxon.common_name.name)
-barplot(sort(anemone_data, decreasing = T), horiz = TRUE, cex.names = 0.9)
+barplot(sort(anemone_data, decreasing = T),
+        horiz = FALSE, cex.names = 0.5,las = 2)
 
-# bar plot of records by Phyla
-taxonPhylum <- table(inat_data$taxon.phylum)
-barplot(sort(taxonPhylum, decreasing = T), horiz = TRUE, cex.names = 0.5,las = 2)
 
+################################################################################
+inat_data_filtered = inat_data
+inat_data_filtered = filter(inat_data_filtered,marine == 1 | brackish == 1)
+
+# bar plot of records by marine and brackish species
+df <- table(inat_data_filtered$taxon.order)
+barplot(sort(df, decreasing = T),
+        horiz = TRUE, cex.names = 0.5,las = 2)
+
+# Create a color palette based on common names
+species_colors <- colorFactor(
+  palette = hue_pal()(length(unique(inat_data_filtered$taxon.phylum))),
+  domain = inat_data_filtered$taxon.phylum
+)
+
+leaflet(data = inat_data_filtered) %>%
+  addProviderTiles(providers$Esri.OceanBasemap) %>%
+  addCircleMarkers(~ as.numeric(longitude), ~ as.numeric(latitude),
+                   radius = 5,
+                   color = ~ species_colors(taxon.phylum),
+                   popup = ~ paste("Species:", taxon.phylum, " Date:", time_observed_at)
+  ) %>%
+  addLegend("bottomright",
+            colors = scales::hue_pal()(
+              length(unique(inat_data_filtered$taxon.phylum))
+            ),
+            labels = unique(inat_data_filtered$taxon.phylum),
+            title = "Species"
+  )
 # ==============================================================================
 #                             NON-NATIVE MARINE SPECIES
 # ==============================================================================
@@ -168,7 +203,6 @@ non_native_species <- read.csv("data/UK marine NNS.csv")
 # Match observations against non-native species list
 natbioblitz_nns <- subset(inat_data, taxon.id %in% non_native_species$inat_id)
 cat("Number of non-native species records found:", nrow(natbioblitz_nns), "\n")
-View(natbioblitz_nns)
 
 # ------------------------------------------------------------------------------
 #                       Step 2: Map of Non-native Species
@@ -188,7 +222,8 @@ leaflet(data = natbioblitz_nns) %>%
         popup = ~ paste("Species:", taxon.common_name.name, " Date:", time_observed_at)
     ) %>%
     addLegend("bottomright",
-        colors = scales::hue_pal()(length(unique(natbioblitz_nns$taxon.common_name.name))),
+        colors = scales::hue_pal()(
+          length(unique(natbioblitz_nns$taxon.common_name.name))),
         labels = unique(natbioblitz_nns$taxon.common_name.name),
         title = "Species"
     )
@@ -198,7 +233,8 @@ leaflet(data = natbioblitz_nns) %>%
 # ------------------------------------------------------------------------------
 
 species_count <- table(natbioblitz_nns$taxon.common_name.name)
-barplot(sort(species_count, decreasing = T),horiz = TRUE, cex.names = 0.9)
+barplot(sort(species_count, decreasing = T),
+        horiz = TRUE, cex.names = 0.5,las = 2)
 
 # ------------------------------------------------------------------------------
 # End of script
