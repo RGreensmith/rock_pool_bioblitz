@@ -125,39 +125,34 @@ cat("Number of non-native species records found:", nrow(natbioblitz_nns), "\n")
 inat_data_filtered = inat_data
 inat_data_filtered = filter(inat_data_filtered,
                             marine == 1 | brackish == 1 | freshwater ==1)
+windowsFonts(A = windowsFont("Montserrat"))  
 
 png(file = paste(getwd(),"/native_and_non_native.png",sep=""),
-    width = 500,height = 500)
+    width = 1050,height = 600,res=130)
 par(mfrow=c(1,3))
-
 df <- table(inat_data_filtered$taxon.kingdom)
-par(mar=c(2,5,2,1)+0.1)
+par(mar=c(5,5,5,5)+0.1)
 barplot(sort(df, decreasing = F),
-        horiz = TRUE, cex.names = 0.9,las = 1,border = FALSE
+        horiz = TRUE, cex.names = 0.8,las = 1,border = FALSE
         ,xlab="Number of records",col = "lightblue")
 
 df <- table(inat_data_filtered$taxon.phylum)
-par(mar=c(2,5,2,1)+0.1)
+par(mar=c(5,1,5,4)+0.1)
 barplot(sort(df, decreasing = F),
-        horiz = TRUE, cex.names = 0.9,las = 1,border = FALSE
+        horiz = TRUE, cex.names = 0.8,las = 1,border = FALSE
         ,xlab="Number of records",col = "lightblue")
 
 df <- table(inat_data_filtered$taxon.class)
-par(mar=c(2,5,2,1)+0.1)
+par(mar=c(5,3,5,2)+0.1)
 barplot(sort(df, decreasing = F),
-        horiz = TRUE, cex.names = 0.7,las = 1,border = FALSE
+        horiz = TRUE, cex.names = 0.8,las = 1,border = FALSE
         ,xlab="Number of records",col = "lightblue")
 dev.off()
-
-
-
 ### stacked bar plots #######
-
-pdf(file = paste(getwd(),"/stacked_bars.pdf",sep=""),   # The directory you want to save the file in
-    width = 9, # The width of the plot in inches
-    height = 8.7) # The height of the plot in inches
+plotTitles=c("c) Classes","b) Phyla","a) Kingdoms")
+png(file = paste(getwd(),"/stacked_bars.png",sep=""),
+    width = 1050,height = 600,res=130)
 par(mfrow=c(1,3))
-
 for (a in 3:1){
   inat_data_filtered = inat_data
   inat_data_filtered = filter(inat_data_filtered,
@@ -188,21 +183,31 @@ for (a in 3:1){
   for (d in 1:ncol(df)) {
     df[1,d] = df[1,d]-df[2,d]
   }
-  par(mar=c(10,5,4,1)+0.1,xpd=TRUE)
+  if (a==3) {
+    par(mar=c(8,5,5,5)+0.1,xpd=TRUE)
+  } else if (a==2){
+    par(mar=c(8,1,5,4)+0.1,xpd=TRUE)
+  } else if (a==1){
+    par(mar=c(8,3,5,2)+0.1,xpd=TRUE)
+  }
+  
   barplot(df, 
-          col=c("lightgreen","orange"), 
-          horiz = TRUE, cex.names = 0.7,las = 1,border = FALSE, 
+          col=c("lightblue","orange"), 
+          horiz = TRUE, cex.names = 0.8,las = 1,border = FALSE, 
           space=0.04, 
-          font.axis=2, 
-          xlab="Number of records")
+          font.axis=1, 
+          xlab="Number of records",
+          family = "A",
+          main = paste(plotTitles[a],sep=""))
   if(a==2){
-    legend("topright", inset = c(0.4, 1.35),
-           fill = c("lightblue","lightgreen","orange"), 
-           legend=c("Both native and non-native species",
-                    "Native species",
+    legend("topright", inset = c(0.15, 1.2),
+           fill = c("lightblue","orange"),
+           legend=c("Native species",
                     "Non-native species"))
   }
 }
+mtext("Non-terrestrial records identified to species level",
+      side = 3, line = -3, outer = TRUE)
 dev.off()
 
 ################################################################################
