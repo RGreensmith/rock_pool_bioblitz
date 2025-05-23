@@ -44,7 +44,7 @@ brackish = rep(NA, times = length(inat_data[,1]))
 freshwater = rep(NA, times = length(inat_data[,1]))
 terrestrial = rep(NA, times = length(inat_data[,1]))
 
-# Merge the inat_data dataframe with the new taxon columns
+# combine the inat_data dataframe with the new taxon columns
 inat_data = cbind(inat_data,
                   taxon.kingdom,
                   taxon.phylum,
@@ -116,85 +116,80 @@ for (a in 1:l) {
 }
 
 # ==============================================================================
-#                                     ANEMONES
+# Bar plots of number of records identified to species level across taxonomic ranks
 # ==============================================================================
 
-
-
-# ------------------------------------------------------------------------------
-#                             Step 1: Map of Anemones
-# ------------------------------------------------------------------------------
-library(leaflet)
-library(scales)
-
-# Filter anemone data
-anemone_data <- filter(inat_data, taxon.order %in% "Actiniaria")
-nrow(anemone_data)
-
-# Create a color palette based on common names
-species_colors <- colorFactor(
-    palette = hue_pal()(length(unique(anemone_data$taxon.common_name.name))),
-    domain = anemone_data$taxon.common_name.name
-)
-
-leaflet(data = anemone_data) %>%
-    addProviderTiles(providers$Esri.OceanBasemap) %>%
-    addCircleMarkers(~ as.numeric(longitude), ~ as.numeric(latitude),
-        radius = 5,
-        color = ~ species_colors(taxon.common_name.name),
-        popup = ~ paste("Species:", taxon.common_name.name, " Date:", time_observed_at)
-    ) %>%
-    addLegend("bottomright",
-        colors = scales::hue_pal()(
-          length(unique(anemone_data$taxon.common_name.name))
-          ),
-        labels = unique(anemone_data$taxon.common_name.name),
-        title = "Species"
-    )
-
-# ------------------------------------------------------------------------------
-#                 Step 3: Bar Plot - Records per Species (anemones)
-# ------------------------------------------------------------------------------
-anemone_data <- table(anemone_data$taxon.common_name.name)
-barplot(sort(anemone_data, decreasing = T),
-        horiz = FALSE, cex.names = 0.5,las = 2)
-
-
-################################################################################
 inat_data_filtered = inat_data
 inat_data_filtered = filter(inat_data_filtered,marine == 1 | brackish == 1)
 inat_data_filtered = filter(inat_data_filtered,taxon.class == "Gastropoda")
 
-
-
-# df=as.data.frame(df)
-# df = df[df$Freq != 0,]
-
-par(mfrow=c(1,3))
+par(mfrow=c(1,3),mar=c(2,5,2,1)+0.1)
 
 df <- table(inat_data_filtered$taxon.kingdom)
 barplot(sort(df, decreasing = F),
-        horiz = TRUE, cex.names = 0.9,las = 2,
-        main = "Records per Kingdom")
+        horiz = TRUE, cex.names = 0.9,las = 1,border = FALSE,
+        main = "Records per Kingdom",col = "lightblue")
 
 df <- table(inat_data_filtered$taxon.phylum)
-par(mar=c(2,5,2,1))
+par(mar=c(2,5,2,1)+0.1)
 barplot(sort(df, decreasing = F),
-        horiz = TRUE, cex.names = 0.9,las = 2,
-        main = "Records per Phylum")
+        horiz = TRUE, cex.names = 0.9,las = 1,border = FALSE,
+        main = "Records per Phylum",col = "lightblue")
 
 df <- table(inat_data_filtered$taxon.class)
 barplot(sort(df, decreasing = F),
-        horiz = TRUE, cex.names = 0.7,las = 2,
-        main = "Records per Class")
-par(mfrow=c(3,3))
-df <- table(inat_data_filtered$taxon.common_name.name)
-par(mar=c(2,10,2,1))
-barplot(sort(df, decreasing = F),
-        horiz = TRUE, cex.names = 0.7,las = 2,
-        main = "Records of Gastropoda species")
-dev.off()
+        horiz = TRUE, cex.names = 0.7,las = 1,border = FALSE,
+        main = "Records per Class",col = "lightblue")
 
+
+
+#### making class filtered plots ####
+inat_data_filtered = inat_data
+inat_data_filtered = filter(inat_data_filtered,
+                            marine == 1 | brackish == 1)
+taxonPhylumNames = unique(inat_data_filtered$taxon.phylum)
+
+
+for (a in 1:length(taxonPhylumNames)){
+  inat_data_filtered = inat_data
+  inat_data_filtered = filter(inat_data_filtered,
+                              marine == 1 | brackish == 1)
+  inat_data_filtered = filter(inat_data_filtered,
+                              taxon.phylum == taxonPhylumNames[a])
+  print(paste("a =",taxonPhylumNames[a]))
+  pdf(file = paste(getwd(),"/",taxonPhylumNames[a],".pdf",sep=""),   # The directory you want to save the file in
+      width = 7.9, # The width of the plot in inches
+      height = 7.5) # The height of the plot in inches
+  
+  taxonClassNames = unique(inat_data_filtered$taxon.class)
+  if (length(taxonClassNames)/3>=1){
+    par(mfrow=c(length(taxonClassNames)/3,3))
+  } else if (length(taxonClassNames)==2) {
+    par(mfrow=c(1,2))
+  } else {
+    par(mfrow=c(1,1))
+  }
+  
+  for (b in 1:length(taxonClassNames)) {
+    inat_data_filtered2 = filter(inat_data_filtered,
+                                taxon.class == taxonClassNames[b])
+    if (is.na(inat_data_filtered2$taxon.common_name.name[1])==FALSE){
+      df <- table(inat_data_filtered2$taxon.common_name.name)
+    } else {
+      df <- table(inat_data_filtered2$taxon.name)
+    }
+    
+    par(mar=c(2,10,2,1)+0.1)
+    barplot(sort(df, decreasing = F),
+            horiz = TRUE, cex.names = 0.7,las = 1,border = FALSE,
+            main = paste(taxonClassNames[b],"spp.",sep = " "),
+            col = "lightblue")
+  }
+  dev.off()
+  rm(taxonClassNames)
+}
+
+###
 
 ####### map ##################
 # Create a color palette based on common names
@@ -203,66 +198,100 @@ species_colors <- colorFactor(
   domain = inat_data_filtered$taxon.phylum
 )
 
-leaflet(data = inat_data_filtered) %>%
+# Filter anemone data
+anemone_data <- filter(inat_data_filtered, taxon.order %in% "Actiniaria")
+nrow(anemone_data)
+
+# Create a color palette based on common names
+anemone_colours <- colorFactor(
+  palette = hue_pal()(length(unique(anemone_data$taxon.common_name.name))),
+  domain = anemone_data$taxon.common_name.name
+)
+
+
+map <- leaflet() %>%
+  # Base groups
+  addProviderTiles(providers$Esri.WorldImagery, group = "World Imagery (satellite)") %>%
+  addProviderTiles(providers$OpenStreetMap,group = "Open Street Map") %>%
+  addProviderTiles(providers$Esri.OceanBasemap) %>%
+  
+  # Overlay groups
+  addCircleMarkers(~ as.numeric(anemone_data$longitude), ~ as.numeric(anemone_data$latitude),
+                   radius = 1,
+                   color = ~ anemone_colours(taxon.common_name.name),
+                   popup = ~ paste("Species:", taxon.common_name.name, " Date:",
+                                   time_observed_at),group = "anemone"
+  )%>%
+  addCircleMarkers(~ as.numeric(longitude), ~ as.numeric(latitude),
+             radius = 1,
+             color = ~ species_colors(taxon.phylum),
+             popup = ~ paste("Species:", taxon.phylum, " Date:",
+                             time_observed_at),group = "b"
+  ) %>%
+  # Layers control
+  addLayersControl(
+    baseGroups = c(
+      "World Imagery (satellite)",
+      "Open Street Map",
+      "Esri OceanBasemap"
+    ),
+    overlayGroups = c("anemone", "b"),
+    options = layersControlOptions(collapsed = FALSE)
+  )%>%
+  addLegend("bottomright",
+            colors = scales::hue_pal()(
+              length(unique(anemone_data$taxon.common_name.name))),
+            labels = unique(anemone_data$taxon.common_name.name),
+            title = "Species"
+  )
+map
+# addLegend("bottomright",
+#           colors = scales::hue_pal()(
+#             length(unique(inat_data_filtered$taxon.phylum))),
+#           labels = unique(inat_data_filtered$taxon.phylum),
+#           title = "Species"
+# ------------------------------------------------------------------------------
+#                             Step 1: Map of Anemones
+# ------------------------------------------------------------------------------
+library(leaflet)
+library(scales)
+
+inat_data_filtered = inat_data
+inat_data_filtered = filter(inat_data_filtered,marine == 1 | brackish == 1 | freshwater == 1)
+# Filter anemone data
+anemone_data <- filter(inat_data_filtered, taxon.class %in% "Gastropoda")
+
+# Create a color palette based on common names
+species_colors <- colorFactor(
+  palette = hue_pal()(length(unique(anemone_data$taxon.name))),
+  domain = anemone_data$taxon.name
+)
+
+leaflet(data = anemone_data) %>%
+  addProviderTiles(providers$Esri.WorldImagery, group = "World Imagery (satellite)") %>%
+  addProviderTiles(providers$OpenStreetMap,group = "Open Street Map") %>%
   addProviderTiles(providers$Esri.OceanBasemap) %>%
   addCircleMarkers(~ as.numeric(longitude), ~ as.numeric(latitude),
                    radius = 5,
-                   color = ~ species_colors(taxon.phylum),
-                   popup = ~ paste("Species:", taxon.phylum, " Date:", time_observed_at)
+                   color = ~ species_colors(taxon.name),
+                   popup = ~ paste("Species:", taxon.name, " Date:", time_observed_at)
   ) %>%
+  # Layers control
+  addLayersControl(
+    baseGroups = c(
+      "World Imagery (satellite)",
+      "Open Street Map",
+      "Esri OceanBasemap"
+    ),
+    options = layersControlOptions(collapsed = FALSE)
+  )%>%
   addLegend("bottomright",
             colors = scales::hue_pal()(
-              length(unique(inat_data_filtered$taxon.phylum))
+              length(unique(anemone_data$taxon.name))
             ),
-            labels = unique(inat_data_filtered$taxon.phylum),
+            labels = unique(anemone_data$taxon.name),
             title = "Species"
   )
-# ==============================================================================
-#                             NON-NATIVE MARINE SPECIES
-# ==============================================================================
-
-# ------------------------------------------------------------------------------
-#                   Step 1: Linking to Non-native Species List
-# ------------------------------------------------------------------------------
-
-# Load the non-native species list
-non_native_species <- read.csv("data/UK marine NNS.csv")
-
-# Match observations against non-native species list
-natbioblitz_nns <- subset(inat_data, taxon.id %in% non_native_species$inat_id)
-cat("Number of non-native species records found:", nrow(natbioblitz_nns), "\n")
-
-# ------------------------------------------------------------------------------
-#                       Step 2: Map of Non-native Species
-# ------------------------------------------------------------------------------
-
-# Create a colour palette based on scientific names
-species_colors <- colorFactor(
-    palette = hue_pal()(length(unique(natbioblitz_nns$taxon.common_name.name))),
-    domain = natbioblitz_nns$taxon.common_name.name
-)
-
-leaflet(data = natbioblitz_nns) %>%
-    addProviderTiles(providers$Esri.OceanBasemap) %>%
-    addCircleMarkers(~ as.numeric(longitude), ~ as.numeric(latitude),
-        radius = 5,
-        color = ~ species_colors(taxon.common_name.name),
-        popup = ~ paste("Species:", taxon.common_name.name, " Date:", time_observed_at)
-    ) %>%
-    addLegend("bottomright",
-        colors = scales::hue_pal()(
-          length(unique(natbioblitz_nns$taxon.common_name.name))),
-        labels = unique(natbioblitz_nns$taxon.common_name.name),
-        title = "Species"
-    )
-
-# ------------------------------------------------------------------------------
-#     Step 3: Bar Plot - Records per Species (Non-native Marine Species Only)
-# ------------------------------------------------------------------------------
-
-species_count <- table(natbioblitz_nns$taxon.common_name.name)
-barplot(sort(species_count, decreasing = T),
-        horiz = TRUE, cex.names = 0.5,las = 2)
 
 # ------------------------------------------------------------------------------
 # End of script
