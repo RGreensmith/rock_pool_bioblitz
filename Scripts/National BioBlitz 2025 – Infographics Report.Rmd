@@ -1,0 +1,252 @@
+---
+title: "National BioBlitz 2025 – Infographics Report"
+author: "The Rock Pool Project"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+fontsize: 8pt
+mainfont: Montserrat
+sansfont: Montserrat
+monofont: Courier New
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  size = "small"
+)
+
+library(ggplot2)
+library(dplyr)
+library(ggtext)
+library(ggimage)
+library(showtext)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(utils)
+
+font_add_google("Montserrat", "mont")
+font_add_google("Chivo", "chivo")
+showtext_auto()
+```
+
+## Loading and Preparing the Data
+
+```{r data}
+saved_data_path <- "../NatBioBlitz_iNat.RData"
+
+if (file.exists(saved_data_path)) {
+  load(saved_data_path)
+} else {
+  source("scripts/new get project obs function.R")
+  NatBioBlitz_iNat <- get_inat_obs_project_v2("brpc-national-bioblitz-2025")
+  save(NatBioBlitz_iNat, file = saved_data_path)
+}
+```
+
+## Infographic 1: Summary Totals
+
+```{r infographic1}
+n_recs <- nrow(NatBioBlitz_iNat)
+n_observers <- length(unique(NatBioBlitz_iNat$user.login))
+n_sp <- length(
+  unique(subset(NatBioBlitz_iNat, taxon.rank == "species")$taxon.name)
+)
+
+summary_data <- data.frame(
+  label = c("observers", "records", "species"),
+  value = c(n_observers, n_recs, n_sp),
+  icon = c(
+    "../icons/people.png",
+    "../icons/clipboard.png",
+    "../icons/crab.png"
+  )
+)
+
+plot1 <- ggplot(summary_data, aes(x = label, y = 1)) +
+  geom_image(aes(image = icon, y = 1.2), size = 0.4) +
+  geom_text(
+    aes(y = 0.8, label = paste0(value, " ", label)),
+    family = "mont",
+    fontface = "bold",
+    size = 5
+  ) +
+  labs(title = "Latest National BioBlitz Results") +
+  scale_x_discrete(expand = expansion(add = 1)) +
+  coord_cartesian(ylim = c(0.5, 1.6)) +
+  theme_void(base_family = "mont") +
+  theme(
+    plot.title = element_text(
+      size = 20,
+      family = "chivo",
+      face = "bold",
+      hjust = 0.5
+    ),
+    plot.margin = margin(10, 10, 10, 10)
+  )
+
+plot1
+```
+
+\newpage
+
+## Infographic 2: Records per Participant
+
+```{r recs_per_observer}
+user_counts <- NatBioBlitz_iNat %>%
+  group_by(user.login, user.name) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  mutate(
+    display_name = ifelse(
+      is.na(user.name) | user.name == "",
+      user.login,
+      user.name
+    )
+  ) %>%
+  arrange(desc(n)) %>%
+  mutate(display_name = factor(display_name, levels = display_name))
+
+plot2 <- ggplot(user_counts, aes(x = display_name, y = n)) +
+  geom_col(fill = "#0B6EF5", width = 0.7) +
+  geom_text(
+    aes(label = n),
+    vjust = -0.6,
+    family = "mont",
+    size = 4
+  ) +
+  labs(
+    title = "Records per Participant – National BioBlitz 2025",
+    x = NULL,
+    y = "Number of Records"
+  ) +
+  theme_minimal(base_family = "mont") +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+    axis.title.y = element_text(size = 14),
+    plot.title = element_text(
+      size = 18,
+      family = "chivo",
+      face = "bold",
+      hjust = 0.5
+    )
+  )
+
+plot2
+```
+
+\newpage
+
+## Infographic 3: Records by Iconic Taxa
+
+```{r recs_per_taxa}
+iconic_taxa <- read.csv(
+  "../Data/BRPC_iconic_taxa.csv",
+  stringsAsFactors = FALSE
+)
+
+taxon_lookup <- setNames(
+  iconic_taxa$Common,
+  as.character(iconic_taxa$iNat_code)
+)
+
+get_iconic_label <- function(ancestry_str) {
+  ids <- unlist(strsplit(ancestry_str, "/"))
+  match <- taxon_lookup[ids]
+  label <- match[!is.na(match)][1]
+  if (is.na(label)) "Other" else label
+}
+
+NatBioBlitz_iNat$iconic_taxon <- vapply(
+  NatBioBlitz_iNat$taxon.ancestry,
+  get_iconic_label,
+  character(1)
+)
+
+iconic_counts <- NatBioBlitz_iNat %>%
+  count(iconic_taxon, name = "n") %>%
+  arrange(desc(n))
+
+plot3 <- ggplot(iconic_counts, aes(
+  x = reorder(iconic_taxon, n),
+  y = n,
+  fill = iconic_taxon
+)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(
+    title = "Records by Rock Pool Iconic Taxa",
+    x = NULL,
+    y = "Number of Records"
+  ) +
+  scale_fill_brewer(palette = "Set3") +
+  theme_minimal(base_family = "mont") +
+  theme(
+    plot.title = element_text(
+      size = 18,
+      family = "chivo",
+      face = "bold",
+      hjust = 0.5
+    ),
+    axis.text = element_text(size = 10)
+  )
+
+plot3
+```
+
+\newpage
+
+## Infographic 4: Map of Observations
+
+```{r recs_map}
+location_split <- strsplit(NatBioBlitz_iNat$location, ",")
+location_df <- do.call(
+  rbind,
+  lapply(location_split, function(x) as.numeric(x))
+)
+colnames(location_df) <- c("latitude", "longitude")
+
+NatBioBlitz_iNat <- cbind(NatBioBlitz_iNat, location_df) %>%
+  filter(!is.na(latitude), !is.na(longitude))
+
+obs_points <- st_as_sf(
+  NatBioBlitz_iNat,
+  coords = c("longitude", "latitude"),
+  crs = 4326
+)
+
+uk_map <- ne_countries(
+  scale = "medium",
+  returnclass = "sf"
+) %>%
+  filter(admin %in% c("United Kingdom", "Ireland"))
+
+plot4 <- ggplot() +
+  geom_sf(data = uk_map, fill = "whitesmoke", colour = "grey50") +
+  geom_sf(
+    data = obs_points,
+    colour = "#0B6EF5",
+    size = 2,
+    alpha = 0.6
+  ) +
+  coord_sf(
+    xlim = c(-11, 3),
+    ylim = c(49.5, 61),
+    expand = FALSE
+  ) +
+  labs(title = "Locations of National BioBlitz Observations (2025)") +
+  theme_void(base_family = "mont") +
+  theme(
+    plot.title = element_text(
+      size = 18,
+      family = "chivo",
+      face = "bold",
+      hjust = 0.5
+    )
+  )
+
+plot4
+```
