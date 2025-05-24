@@ -30,11 +30,6 @@ cat("Last update:", as.character(last_update), "\n")
 # ------------------------------------------------------------------------------
 #                     Adding World Register of Marine Species Data
 # ------------------------------------------------------------------------------
-
-
-# ------------------------------------------------------------------------------
-#        Add and fill columns for taxonomic data to iNaturalist dataframe
-# ------------------------------------------------------------------------------
 # Create new empty columns to merge with inat_data for taxonomy data
 taxon.kingdom = rep(NA, times = length(inat_data[,1]))
 taxon.phylum = rep(NA, times = length(inat_data[,1]))
@@ -125,7 +120,6 @@ cat("Number of non-native species records found:", nrow(natbioblitz_nns), "\n")
 inat_data_filtered = inat_data
 inat_data_filtered = filter(inat_data_filtered,
                             marine == 1 | brackish == 1 | freshwater ==1)
-windowsFonts(A = windowsFont("Montserrat"))  
 
 png(file = paste(getwd(),"/native_and_non_native.png",sep=""),
     width = 1050,height = 600,res=130)
@@ -148,29 +142,26 @@ barplot(sort(df, decreasing = F),
         horiz = TRUE, cex.names = 0.8,las = 1,border = FALSE
         ,xlab="Number of records",col = "lightblue")
 dev.off()
+################################################################################
+
 ### stacked bar plots #######
-plotTitles=c("c) Classes","b) Phyla","a) Kingdoms")
+plotTitles=c("Class","Phylum","Kingdom")
 png(file = paste(getwd(),"/stacked_bars.png",sep=""),
-    width = 1050,height = 600,res=130)
+    width = 1050,height = 700,res=130)
 par(mfrow=c(1,3))
 for (a in 3:1){
   inat_data_filtered = inat_data
   inat_data_filtered = filter(inat_data_filtered,
                               marine == 1 | brackish == 1 | freshwater ==1)
-  
   colRefINat_data_filtered=length(inat_data_filtered)-(5+a)
   taxonNames = sort(unique(
     inat_data_filtered[,colRefINat_data_filtered]))
-  
   df = matrix(0,nrow=1,ncol=length(taxonNames))
   colnames(df)=taxonNames
   rownames(df)=c("nonNative")
-  
   colRefNatbioblitz_nns = length(natbioblitz_nns)-(5+a)
-  
   nativeTable = table(inat_data_filtered[,colRefINat_data_filtered])
   nonNativeTable = table(natbioblitz_nns[,colRefNatbioblitz_nns])
-  
   for (b in 1:ncol(df)){
     for (c in 1:length(dimnames(nonNativeTable)[[1]])){
       if (colnames(df)[b] == dimnames(nonNativeTable)[[1]][c]){
@@ -184,32 +175,39 @@ for (a in 3:1){
     df[1,d] = df[1,d]-df[2,d]
   }
   if (a==3) {
-    par(mar=c(8,5,5,5)+0.1,xpd=TRUE)
+    par(mar=c(8,5,7,5)+0.1,xpd=TRUE)
   } else if (a==2){
-    par(mar=c(8,1,5,4)+0.1,xpd=TRUE)
+    par(mar=c(8,1,7,4)+0.1,xpd=TRUE)
   } else if (a==1){
-    par(mar=c(8,3,5,2)+0.1,xpd=TRUE)
+    par(mar=c(8,3,7,2)+0.1,xpd=TRUE)
   }
   
   barplot(df, 
-          col=c("lightblue","orange"), 
+          col=c("#00a6fb","#F79824"), 
           horiz = TRUE, cex.names = 0.8,las = 1,border = FALSE, 
           space=0.04, 
           font.axis=1, 
           xlab="Number of records",
-          family = "A",
-          main = paste(plotTitles[a],sep=""))
+          col.lab =c("#191d2d"))
+  axis(1,col="#191d2d")
+  mtext(paste(plotTitles[a],sep=""),
+        side = 3, adj = 0, line = -0.5,cex = 0.7,col=c("#191d2d"),font = 2)
   if(a==2){
     legend("topright", inset = c(0.15, 1.2),
-           fill = c("lightblue","orange"),
+           fill = c("#00a6fb","#F79824"),
            legend=c("Native species",
                     "Non-native species"))
   }
 }
-mtext("Non-terrestrial records identified to species level",
-      side = 3, line = -3, outer = TRUE)
+points(40, 40, pch = 16,col = "#ffc0be",cex=17)
+points(160, 35, pch = 16,col = "#ffc0be",cex=30)
+mtext("Number of non-terrestrial records identified to species level by rank",
+      side = 3, line = -3, outer = TRUE,col = c("#0e6bff"),font = 2)
+last_update <- max(inat_data$updated_at)
+mtext(paste("Last update:",last_update,sep = ""),side = 3, line = -4.5, outer = TRUE,col = c("#0e6bff"),
+      cex = 0.6,font = 3)
+box("outer", col="#0e6bff",lwd=7)
 dev.off()
-
 ################################################################################
 # End
 ################################################################################

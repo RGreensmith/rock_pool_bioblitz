@@ -1,0 +1,70 @@
+---
+title: "National BioBlitz 2025 – Species League Table"
+author: "The Rock Pool Project"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rinat)
+library(tidyverse)
+library(lubridate)
+
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  warning = FALSE, 
+  message = FALSE
+)
+```
+
+```{r download_latest_data}
+# Download latest observations from the BioBlitz practice project
+project_slug <- "brpc-national-bioblitz-2025"
+inat_data <- get_inat_obs_project(project_slug)
+
+
+#get species scores
+load("../Data/Latest_UK_Species_Scores.RData")
+
+sp_scores <- UK_N_obs$Score
+names(sp_scores) <- as.character(UK_N_obs$id)
+
+#add scores to iNat data
+inat_data$Score <- sp_scores[as.character(inat_data$taxon.id)]
+
+#if species level observation not have a score, give is zero unless it's Research grade then give it a 20
+inat_data$Score[
+  is.na(inat_data$Score) &
+  inat_data$taxon.rank == "species" &
+  inat_data$quality_grade == "research"
+] <- 20
+
+```
+
+The National BioBlitz currently has `r nrow(inat_data)` records.
+
+```{r league_table}
+library(tidyverse)
+
+# Ensure only species-level and research-grade observations are considered for species count
+species_level <- inat_data %>%
+  filter(taxon.rank == "species", quality_grade == "research")
+
+
+# Build league table
+league_table <- inat_data %>%
+  filter(quality_grade == "research") %>%  # apply filter to all calculations
+  group_by(user_login) %>%
+  summarise(
+    total_records = n(),
+    total_species = n_distinct(taxon.name[taxon.rank == "species"]),
+    total_score = sum(Score, na.rm = TRUE),
+    top_species_score = max(Score, na.rm = TRUE)
+  ) %>%
+  arrange(desc(total_score))
+
+# Optional: make it a pretty table
+knitr::kable(league_table, caption = "National BioBlitz League Table – Species Scoring")
+
+```
