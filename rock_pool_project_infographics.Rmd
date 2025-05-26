@@ -1,12 +1,8 @@
 ---
-title: "Rock pool National BioBlitz 2025"
+title: "Rock Pool National BioBlitz 2025"
 author: "Rosemary Victoria Greensmith"
 date: "`r Sys.Date()`"
-output:
-  html_document:
-    df_print: paged
-  pdf_document:
-    latex_engine: xelatex
+output: html_document
 fontsize: 12pt
 mainfont: Montserrat
 sansfont: Montserrat
@@ -36,16 +32,23 @@ font_add_google("Chivo", "chivo")
 showtext_auto()
 ```
 
-This is a report to produce bar plots from iNaturalist Bioblitz rock pool data of the number of native and non-native species (non-terrestrial) records across the taxa that have been identified to species level.
 
-## Loading and preparing the data
+\
+The purpose of this report is to show an infographic of rocky shore species presence data collected by citizen scientists during The Rock Pool Project 2025 iNaturalist Bioblitz. The infographic displays the number of non-terrestrial records that were identified to species level, grouped into native and non-native species, across taxonomic ranks (Kingdom, Phylum and Class) using bar plots. This report also shows the code used to create the infographic.
 
-This code loads the following data using api keys:
+\
+\
+
+### Loading and preparing the data
+
+The following R code loads both a locally stored csv of non-native species names and the following data using api keys:
 
 * iNaturalist bioblitz 2025 data
 * World Register of Marine Species (WoRMS) taxonomic data
+\
+\
 
-### Loading iNaturalist bioblitz 2025 data
+#### Loading iNaturalist bioblitz 2025 data
 
 ```{r bioblitzdata}
 # Define project ID and API parameters
@@ -61,11 +64,12 @@ inat_data$time_observed_at <- ymd_hms(inat_data$time_observed_at)
 last_update <- max(inat_data$updated_at)
 cat("Last update:", as.character(last_update), "\n")
 ```
+\
 
-### Loading and integrating WoRMS taxonomic data into the inaturalist dataset
+#### Loading and integrating WoRMS taxonomic data into the inaturalist dataframe
 
 ```{r wormsdata}
-# Create new empty columns to merge with inat_data for taxonomy data
+# Create empty columns to bind with the inat_data dataframe for the new taxonomic data
 taxon.kingdom = rep(NA, times = length(inat_data[,1]))
 taxon.phylum = rep(NA, times = length(inat_data[,1]))
 taxon.class = rep(NA, times = length(inat_data[,1]))
@@ -76,24 +80,26 @@ brackish = rep(NA, times = length(inat_data[,1]))
 freshwater = rep(NA, times = length(inat_data[,1]))
 terrestrial = rep(NA, times = length(inat_data[,1]))
 
-# combine the inat_data dataframe with the new taxon columns
+# Combine the inat_data dataframe with the new columns
 inat_data = cbind(
   inat_data,taxon.kingdom,taxon.phylum,taxon.class,taxon.order,taxon.family,
   marine,brackish,freshwater,terrestrial)
 
-# filling in new inat_data columns with taxonomic information from WoRMS
+# Fill in new inat_data columns with taxonomic information from WoRMS
 l = length(inat_data[,1])
 for (a in 1:l) {
   if (
     is.na(inat_data$taxon.rank[a])==FALSE && inat_data$taxon.rank[a]=="species"
     ){
     
+    # Split the scientific name into two character objects: genus and species
     binomClassNm = inat_data$taxon.name[a]
     binomClassNmSplit = strsplit(binomClassNm,"[ ]")
     
     genus = binomClassNmSplit[[1]][1]
     species = binomClassNmSplit[[1]][2]
     
+    # Paste the genus and species names into the WoRMS API key and download relevant data
     api = paste("https://www.marinespecies.org/rest/AphiaRecordsByName/",
                 genus,
                 "%20",
@@ -103,6 +109,7 @@ for (a in 1:l) {
     taxonInfo = GET(api)
     taxonInfoContent = httr::content(taxonInfo, as = 'text')
     
+    # Populate the new columns with taxonomic data downloaded from WoRMS
     if(object.size(taxonInfoContent)>112) {
       taxonInfoContentJSON = jsonlite::fromJSON(taxonInfoContent)
       
@@ -132,40 +139,64 @@ for (a in 1:l) {
 
 ```
 
+\
 
-### Linking to Non-native Species List
+#### Linking to Non-native Species List
 
 ```{r nonnativelist}
 # Load the non-native species list
 non_native_species <- read.csv("Data/UK marine NNS.csv")
 
 # Match observations against non-native species list
-
 natbioblitz_nns <- subset(inat_data, taxon.id  %in% non_native_species$inat_id)
 cat("Number of non-native species records found:", nrow(natbioblitz_nns), "\n")
 ```
+\
 
+### Infographic
 
-## Including Plots
+The following R code creates bar plots to show the number of non-terrestrial records that were identified to species level in three taxonomic ranks (Kingdom, Phylum and Class), split into native and non-native groups.
 
-You can also embed plots, for example:
+\
 
-```{r pressure, echo=FALSE}
+#### Stacked bar plot of records
+
+The infographic styling is based on the design of The Rock Pool Project website. The colours used in the plot were defined using the hex codes of colours from The Rock Pool Project website (obtained using a colour picker tool).
+
+```{r pressure}
+# Define plot title names
 plotTitles=c("Class","Phylum","Kingdom")
+
+# Start new plot device and define number of plotting regions
 par(mfrow=c(1,3))
+
+# Create the bar plots. The Loop index numbers are backwards for ease of defining inat_data column reference number whilst also allowing for the plotting of Kingdom in the left-hand plotting region and Class in the right-hand plotting region).
 for (a in 3:1){
+  # Filter out the non-terrestrial species data and species not identified to species level
   inat_data_filtered = inat_data
   inat_data_filtered = filter(inat_data_filtered,
                               marine == 1 | brackish == 1 | freshwater ==1)
+  
+  # Define column reference number for the name of each taxa group for each of the three ranks
   colRefINat_data_filtered=length(inat_data_filtered)-(5+a)
+  
+  # Sort each of the names alphabetically to allow accurate matching when native and non-native species tables are combined
   taxonNames = sort(unique(
     inat_data_filtered[,colRefINat_data_filtered]))
+  
+  # Create empty matrix for bar plot data
   df = matrix(0,nrow=1,ncol=length(taxonNames))
   colnames(df)=taxonNames
   rownames(df)=c("nonNative")
+  
+  # Define column reference number for the name of each taxa group
   colRefNatbioblitz_nns = length(natbioblitz_nns)-(5+a)
+  
+  # Create frequency tables for native and non-native species
   nativeTable = table(inat_data_filtered[,colRefINat_data_filtered])
   nonNativeTable = table(natbioblitz_nns[,colRefNatbioblitz_nns])
+  
+  # Populate the empty matrix for bar plot data with frequency values of each non-native species from the non-native species frequency table
   for (b in 1:ncol(df)){
     for (c in 1:length(dimnames(nonNativeTable)[[1]])){
       if (colnames(df)[b] == dimnames(nonNativeTable)[[1]][c]){
@@ -173,29 +204,39 @@ for (a in 3:1){
       }
     }
   }
+  
+  # Re-define the matrix object as having the rows from the native species frequency table bound to the rows of the matrix (now populated with non-native species frequencies of occurrence)
   df = rbind(nativeTable,df)
-  df2 = df
+  
+  # Subtract the non-native species frequencies from the native species frequency row
   for (d in 1:ncol(df)) {
     df[1,d] = df[1,d]-df[2,d]
   }
-  if (a==3) {
-    par(mar=c(8,5,7,5)+0.1,xpd=TRUE)
-  } else if (a==2){
-    par(mar=c(8,1,7,4)+0.1,xpd=TRUE)
-  } else if (a==1){
-    par(mar=c(8,3,7,2)+0.1,xpd=TRUE)
+  
+  # Setting margins for each plot individually
+  if (a==3) { # (Kingdom)
+    par(mar=c(8.5,4.5,5,5)+0.1,xpd=TRUE)
+  } else if (a==2){ # (Phylum)
+    par(mar=c(8.5,2.2,5,3.5)+0.1,xpd=TRUE)
+  } else if (a==1){ # (Class)
+    par(mar=c(8.5,3,5,1.7)+0.1,xpd=TRUE)
   }
   
+  # Plot the bar plot
   barplot(df, 
           col=c("#00a6fb","#F79824"), 
-          horiz = TRUE, cex.names = 0.8,las = 1,border = FALSE, 
+          horiz = TRUE, cex.names = 1.8,las = 1,border = FALSE, 
           space=0.04, 
           font.axis=1, 
           xlab="Number of records",
           col.lab =c("#191d2d"))
   axis(1,col="#191d2d")
+  
+  # Plot titles
   mtext(paste(plotTitles[a],sep=""),
-        side = 3, adj = 0, line = -0.5,cex = 0.7,col=c("#191d2d"),font = 2)
+        side = 3, adj = 0, line = -0.5,cex = 0.9,col=c("#191d2d"),font = 2)
+  
+  # Legend
   if(a==2){
     legend("topright", inset = c(0.15, 1.2),
            fill = c("#00a6fb","#F79824"),
@@ -203,14 +244,24 @@ for (a in 3:1){
                     "Non-native species"))
   }
 }
-points(40, 40, pch = 16,col = "#ffc0be",cex=17)
-points(160, 35, pch = 16,col = "#ffc0be",cex=30)
-mtext("Number of non-terrestrial records identified to species level by rank",
-      side = 3, line = -3, outer = TRUE,col = c("#0e6bff"),font = 2)
-last_update <- max(inat_data$updated_at)
-mtext(paste("Last update:",last_update,sep = ""),side = 3, line = -4.5, outer = TRUE,col = c("#0e6bff"),
-      cex = 0.6,font = 3)
-box("outer", col="#0e6bff",lwd=7)
-```
+# Add decorative blobs
+points(40, 40, pch = 16,col = "#ffc0be",cex=14)
+points(160, 35, pch = 16,col = "#ffc0be",cex=19)
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+# Outer plot title
+mtext("Number of non-terrestrial records identified to species level by rank",
+      side = 3, line = -3, outer = TRUE,col = c("#191d2d"),font = 2,cex = 2.3)
+
+# Plot subtitle
+last_update <- max(inat_data$updated_at)
+mtext(paste("Last update:",last_update,sep = " "),side = 3, line = -4.5,
+      outer = TRUE,col = c("#0e6bff"),
+      cex = 1.6,font = 3)
+
+# Add a two tone border
+box("outer", col="#0e6bff",lwd=7)
+box("outer", col="#191d2d",lwd=2)
+```
+\
+\
+\
