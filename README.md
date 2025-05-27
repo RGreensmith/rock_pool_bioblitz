@@ -2,7 +2,8 @@
 The purpose of this project is to produce an infographic of rocky shore species presence data collected by citizen scientists during The Rock Pool Project 2025 iNaturalist Bioblitz.
 
 The infographic below displays the number of non-terrestrial records that were identified to species level, grouped into native and non-native species, across taxonomic ranks (Kingdom, Phylum and Class) using bar plots.
-Locally stored csv of non-native species names and the following data using api keys:
+
+The bar plots uses a locally stored csv of non-native species names and the following data using api keys:
 
 * iNaturalist bioblitz 2025 data
 * World Register of Marine Species (WoRMS) taxonomic data
