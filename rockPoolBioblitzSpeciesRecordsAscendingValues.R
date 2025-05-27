@@ -1,5 +1,5 @@
 # Script to produce bar plots from iNaturalist Bioblitz rock pool data of the
-# number of native and non-native species (marine, brackish and freshwater)
+# number of species (marine, brackish and freshwater)
 # records across the taxa that have been identified to species level
 
 # ==============================================================================
@@ -55,7 +55,7 @@ l = length(inat_data[,1])
 for (a in 1:l) {
   if (
     is.na(inat_data$taxon.rank[a])==FALSE && inat_data$taxon.rank[a]=="species"
-    ){
+  ){
     
     binomClassNm = inat_data$taxon.name[a]
     binomClassNmSplit = strsplit(binomClassNm,"[ ]")
@@ -99,84 +99,35 @@ for (a in 1:l) {
   }
 }
 
-# ------------------------------------------------------------------------------
-#                   Linking to Non-native Species List
-# ------------------------------------------------------------------------------
+# ==============================================================================
+#       Bar plots of number of records identified to species level
+#                             across taxonomic ranks
+# ==============================================================================
 
-# Load the non-native species list
-non_native_species <- read.csv("data/UK marine NNS.csv")
+inat_data_filtered = inat_data
+inat_data_filtered = filter(inat_data_filtered,
+                            marine == 1 | brackish == 1 | freshwater ==1)
 
-# Match observations against non-native species list
-
-natbioblitz_nns <- subset(inat_data, taxon.id  %in% non_native_species$inat_id)
-cat("Number of non-native species records found:", nrow(natbioblitz_nns), "\n")
-
-################################################################################
-
-### stacked bar plots #######
-plotTitles=c("Class","Phylum","Kingdom")
-png(file = paste(getwd(),"/stacked_bars.png",sep=""),
-    width = 1050,height = 700,res=130)
+png(file = paste(getwd(),"/native_and_non_native.png",sep=""),
+    width = 1050,height = 600,res=130)
 par(mfrow=c(1,3))
-for (a in 3:1){
-  inat_data_filtered = inat_data
-  inat_data_filtered = filter(inat_data_filtered,
-                              marine == 1 | brackish == 1 | freshwater ==1)
-  colRefINat_data_filtered=length(inat_data_filtered)-(5+a)
-  taxonNames = sort(unique(
-    inat_data_filtered[,colRefINat_data_filtered]))
-  df = matrix(0,nrow=1,ncol=length(taxonNames))
-  colnames(df)=taxonNames
-  rownames(df)=c("nonNative")
-  colRefNatbioblitz_nns = length(natbioblitz_nns)-(5+a)
-  nativeTable = table(inat_data_filtered[,colRefINat_data_filtered])
-  nonNativeTable = table(natbioblitz_nns[,colRefNatbioblitz_nns])
-  for (b in 1:ncol(df)){
-    for (c in 1:length(dimnames(nonNativeTable)[[1]])){
-      if (colnames(df)[b] == dimnames(nonNativeTable)[[1]][c]){
-        df[b] = nonNativeTable[c]
-      }
-    }
-  }
-  df = rbind(nativeTable,df)
-  df2 = df
-  for (d in 1:ncol(df)) {
-    df[1,d] = df[1,d]-df[2,d]
-  }
-  if (a==3) {
-    par(mar=c(8,5,7,5)+0.1,xpd=TRUE)
-  } else if (a==2){
-    par(mar=c(8,1,7,4)+0.1,xpd=TRUE)
-  } else if (a==1){
-    par(mar=c(8,3,7,2)+0.1,xpd=TRUE)
-  }
-  
-  barplot(df, 
-          col=c("#00a6fb","#F79824"), 
-          horiz = TRUE, cex.names = 0.8,las = 1,border = FALSE, 
-          space=0.04, 
-          font.axis=1, 
-          xlab="Number of records",
-          col.lab =c("#191d2d"))
-  axis(1,col="#191d2d")
-  mtext(paste(plotTitles[a],sep=""),
-        side = 3, adj = 0, line = -0.5,cex = 0.7,col=c("#191d2d"),font = 2)
-  if(a==2){
-    legend("topright", inset = c(0.15, 1.2),
-           fill = c("#00a6fb","#F79824"),
-           legend=c("Native species",
-                    "Non-native species"))
-  }
-}
-points(40, 40, pch = 16,col = "#ffc0be",cex=17)
-points(160, 35, pch = 16,col = "#ffc0be",cex=30)
-mtext("Number of non-terrestrial records identified to species level by rank",
-      side = 3, line = -3, outer = TRUE,col = c("#0e6bff"),font = 2)
-last_update <- max(inat_data$updated_at)
-mtext(paste("Last update:",last_update,sep = ""),side = 3, line = -4.5, outer = TRUE,col = c("#0e6bff"),
-      cex = 0.6,font = 3)
-box("outer", col="#0e6bff",lwd=7)
+df <- table(inat_data_filtered$taxon.kingdom)
+par(mar=c(5,5,5,5)+0.1)
+barplot(sort(df, decreasing = F),
+        horiz = TRUE, cex.names = 0.8,las = 1,border = FALSE
+        ,xlab="Number of records",col = "lightblue")
+
+df <- table(inat_data_filtered$taxon.phylum)
+par(mar=c(5,1,5,4)+0.1)
+barplot(sort(df, decreasing = F),
+        horiz = TRUE, cex.names = 0.8,las = 1,border = FALSE
+        ,xlab="Number of records",col = "lightblue")
+
+df <- table(inat_data_filtered$taxon.class)
+par(mar=c(5,3,5,2)+0.1)
+barplot(sort(df, decreasing = F),
+        horiz = TRUE, cex.names = 0.8,las = 1,border = FALSE
+        ,xlab="Number of records",col = "lightblue")
 dev.off()
-################################################################################
+
 # End
-################################################################################
