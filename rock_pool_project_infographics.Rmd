@@ -33,7 +33,6 @@ library(dplyr)     # for WoRMS data
 The purpose of this report is to show an infographic of rocky shore species presence data collected by citizen scientists during The Rock Pool Project 2025 iNaturalist Bioblitz. The infographic displays the number of non-terrestrial records that were identified to species level, grouped into native and non-native species, across taxonomic ranks (Kingdom, Phylum and Class) using bar plots. This report also shows the code used to create the infographic.
 
 \
-\
 
 ### Loading and preparing the data
 
@@ -254,7 +253,6 @@ mtext(paste("Last update:",last_update,sep = " "),side = 3, line = -3.7,
 
 # Add a two tone border
 box("outer", col="#0e6bff",lwd=7)
-box("outer", col="#191d2d",lwd=2)
 ```
 \
 \
