@@ -36,11 +36,11 @@ The purpose of this report is to show an infographic of rocky shore species pres
 
 ### Loading and preparing the data
 
-The following R code loads both a locally stored csv of non-native species names and the following data using api keys:
+The following R code loads the data listed below:
 
-* iNaturalist bioblitz 2025 data
-* World Register of Marine Species (WoRMS) taxonomic data
-\
+* iNaturalist bioblitz 2025 data - accessed via API
+* World Register of Marine Species (WoRMS) taxonomic data - accessed via API
+* List of UK non-native marine species - locally stored ("Data/UK marine NNS.csv")
 \
 
 #### Loading iNaturalist bioblitz 2025 data
@@ -150,13 +150,13 @@ cat("Number of non-native species records found:", nrow(natbioblitz_nns), "\n")
 
 ### Infographic
 
-The following R code creates bar plots to show the number of non-terrestrial records that were identified to species level in three taxonomic ranks (Kingdom, Phylum and Class), split into native and non-native groups.
+The following R code creates bar plots to show the number of non-terrestrial records that were identified to species level across three taxonomic ranks (Kingdom, Phylum and Class), split into native and non-native groups.
 
 \
 
 #### Stacked bar plot of records
 
-The infographic styling is based on the design of The Rock Pool Project website. The colours used in the plot were defined using the hex codes of colours from The Rock Pool Project website (obtained using a colour picker tool).
+The infographic styling is based on the design of The Rock Pool Project website. The colours used in the plots were defined using the hex codes of colours from The Rock Pool Project website (obtained using a colour picker tool).
 
 ```{r pressure}
 # Define plot title names
