@@ -1,0 +1,216 @@
+---
+title: "Big Rock Pool Challenge - National BioBlitz 2025 – Final Report"
+author: "The Rock Pool Project"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    includes:
+      in_header: report-header.tex
+fontsize: 10pt
+mainfont: Montserrat
+sansfont: Chivo
+monofont: Courier New
+geometry: a4paper, top=30mm, bottom=20mm, left=20mm, right=20mm
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.width = 8,
+  fig.height = 5
+)
+
+library(ggplot2)
+library(dplyr)
+library(showtext)
+library(ggtext)
+library(ggimage)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(knitr)
+
+# Fonts for plots
+font_add_google("Montserrat", "mont")
+font_add_google("Chivo", "chivo")
+showtext_auto()
+```
+
+```{r data_load}
+load("NatBioBlitz_iNat20250604.RData") #iNat BioBlitz Data as of 4th June 2025
+
+```
+
+\begin{center}
+\includegraphics[width=0.8\textwidth]{images/natbioadvert.png}
+
+\includegraphics[width=0.8\textwidth]{images/BRPC Funders and Partner logos.png}
+\end{center}
+
+\newpage
+
+
+
+# Executive Summary
+
+A brief overview of the National BioBlitz 2025: aims, reach, and key achievements. Include highlights and a general snapshot of participation.
+
+\newpage
+
+
+
+# About the National BioBlitz
+
+The [National BioBlitz 2025](https://www.therockpoolproject.co.uk/national-bioblitz) was a UK-wide citizen science initiative coordinated by The Rock Pool Project, aimed at engaging people across the country in discovering and recording the biodiversity of our rocky shores.
+
+Held between 17th and 25th May 2025, the event empowered individuals, families, and wildlife groups to take part in a shared national effort to explore intertidal habitats and contribute meaningful data to marine research and conservation.
+
+Participants of all ages and backgrounds visited their local coastlines to record the species they found in rock pools and along the shore. Whether seasoned naturalists or first-time explorers, everyone played a role in helping to build a clearer picture of the UK's marine life.
+
+## Data collection
+
+All observations were recorded using [iNaturalist](https://www.inaturalist.org/), a free, community-powered biodiversity recording platform. Participants submitted photographs of their finds, along with the date and location of each observation. These were automatically grouped into a dedicated project: the [National BioBlitz 2025 iNaturalist page](https://www.inaturalist.org/projects/brpc-national-bioblitz-2025), which captured all qualifying submissions made during the event period.
+
+Species identifications were suggested by participants and verified through the iNaturalist community and The Rock Pool Project’s team of marine biologists. This process helped ensure data quality while also offering an accessible learning experience for participants.
+
+The resulting dataset represents a unique, community-generated snapshot of intertidal biodiversity across the UK — supporting long-term research and helping to track changes in species distributions, including the spread of marine non-natives.
+
+
+
+## Headline Statistics
+
+```{r overall-summary}
+# Placeholder for total counts and an icon-based infographic
+data_summary <- data.frame(
+  category = c("Observers", "Records", "Species"),
+  value = c(NA, NA, NA) # Fill with actual numbers
+)
+```
+
+## Geographical Coverage
+
+```{r geo_coverage}
+# Placeholder for map of observations, etc
+```
+
+\newpage
+
+# Regional Summaries
+
+Repeat the following structure for each region (e.g. South West, Wales):
+
+## South West Region
+
+- Total observations: _X_
+- Unique participants: _Y_
+- Most recorded species: _Z_
+
+Individual League table - highlight t shirt winner
+
+```{r regional-plot-sw}
+# Placeholder for regional bar chart or map
+```
+
+\newpage
+
+# Individual Feedback (optional)
+
+Tailor info for a specific individual
+
+## Example User Summary
+
+- Total records: _X_
+- Species recorded: _Y_
+- Non-native species: _Z_
+
+top species
+
+```{r individual-feedback-example}
+# Placeholder for individual bar/tile chart
+```
+
+\newpage
+
+# Non-native Species Results
+
+## Summary from the National BioBlitz
+
+Overview of the non-native species found
+
+```{r nn-summary}
+# Placeholder for top non-native species chart
+```
+
+## Comparison with NBN Atlas Baseline
+
+ - Which species were found in unusual places?
+ - Which species weren't found in places they would be expected to be found?
+
+```{r nn-comparison}
+# Placeholder for before/after maps or bar charts
+```
+
+\newpage
+
+# Species Highlights
+
+- Rarest record
+- Best photo submission
+- Noteworthy range extension
+
+```{r highlights}
+# Placeholder for image collage or featured species panel
+```
+
+
+\newpage
+
+# Project Partners and Support
+
+Thank you to all our partners, volunteers, and funders.
+
+ADD PARTNER LOGOS HERE
+
+\newpage
+
+# Next Steps: How to Stay Involved
+
+## 1. Join or Start a Rock Pool Hub
+- Get involved locally or start your own hub with our support.
+
+## 2. Keep Recording on iNaturalist
+- Every observation adds to the UK marine picture.
+
+## 3. Seasonal Challenges
+- Look out for themed events and mini-BioBlitzes.
+
+## 4. Follow & Tag Us
+- Stay connected via social media: [@therockpoolproject](https://www.instagram.com/therockpoolproject)
+
+## 5. Volunteer or Collaborate
+- Run events, support schools, or partner with us.
+
+## 6. Sign Up for Updates
+- Visit [www.therockpoolproject.co.uk](https://www.therockpoolproject.co.uk)
+
+\newpage
+
+# Appendices
+
+## Species List
+
+```{r species-table}
+# Placeholder for table of all recorded species
+```
+
+## Methodology Notes
+
+Details on data collection, validation, and tools used.
+
+## Data Use Statement
+
+Explanation of how participant and observation data are used, stored, and shared.
