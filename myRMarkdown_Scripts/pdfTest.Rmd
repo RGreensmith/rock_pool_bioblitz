@@ -2,8 +2,10 @@
 title: "Rock Pool National BioBlitz 2025"
 author: "Rosemary Greensmith"
 date: "`r Sys.Date()`"
-output: pdf_document
-  includes:
+output:
+  pdf_document:
+    latex_engine: xelatex
+    includes:
       in_header: report-header.tex
 fontsize: 12pt
 mainfont: Montserrat
@@ -14,13 +16,12 @@ geometry: a4paper, top=30mm, bottom=20mm, left=20mm, right=20mm
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo = TRUE,
+  echo = FALSE,
   warning = FALSE,
   message = FALSE,
   fig.align = "center",
-  fig.height = 6,
-  fig.width = 10,
-  size = "large"
+  fig.width = 8,
+  fig.height = 5
 )
 
 library(rinat)     # using wrapper for downloading data
@@ -31,6 +32,7 @@ library(dplyr)     # for WoRMS data
 library(ggtext)
 library(showtext)
 library(utils)
+library(knitr)
 
 font_add_google("Montserrat", "mont")
 font_add_google("Chivo", "chivo")
