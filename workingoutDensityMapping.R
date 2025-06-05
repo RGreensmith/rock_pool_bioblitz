@@ -176,29 +176,38 @@ e <- as(raster::extent(
 proj4string(e) <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
 plot(e,axes = TRUE,add = TRUE)
 
+# R program to create a color range
+# Apply colorRampPalette Function
+fun_color_range <- colorRampPalette(c("white","#0e6bff","#F79824", "#F79824"))   
+my_colors <- fun_color_range(1000)  
+
+# Plotting a graph
+# plot(1:100, pch = 20, col = my_colors)
 dev.off()
 
-plot(masked_kde2,col=viridis(500, begin = 0, end = 1, direction = 1),
-     xlim=c(-11,3),ylim=c(48.5,61.5),axes=TRUE)
+# plot(masked_kde2,col=viridis(500, begin = 0, end = 1, direction = 1),
+#      xlim=c(-11,3),ylim=c(48.5,61.5),axes=TRUE)
+# 
+# plot(kde.output,col=terrain.colors(500,rev = TRUE),axes=TRUE,
+#      xlim=c(-11,3),ylim=c(48.5,61.5))
 
-plot(kde.output,col=terrain.colors(500,rev = TRUE),axes=TRUE,
+plot(masked_kde2,col=my_colors,axes=TRUE,
      xlim=c(-11,3),ylim=c(48.5,61.5))
 
-plot(masked_kde2,col=terrain.colors(500,rev = TRUE),axes=TRUE,
-     xlim=c(-11,3),ylim=c(48.5,61.5))
-
-plot(st_geometry(uk_map),add = TRUE,border="black")
-plot(st_geometry(obs_points), add=TRUE, pch=24, col="black", bg="red", cex=0.7)
+plot(st_geometry(uk_map),add = TRUE,border="#191d2d")
+# contour(masked_kde2,add = TRUE,col="#191d2d")
+plot(st_geometry(obs_points), add=TRUE, pch=24, col="#191d2d", bg="#00a6fb", cex=0.7)
 title(main = "Observations")
 
 
 masked_kde2 <- mask(kde, uk_map)
 
 dev.off()
-plot(masked_kde2,col=terrain.colors(500,rev = TRUE),
+plot(masked_kde2,col=topo.colors(500,rev = TRUE),
      xlim=c(-11,3),ylim=c(50,61),axes=TRUE)
 plot(st_geometry(obs_points), add=TRUE, pch=21, col="blue", cex=0.5)
 plot(st_geometry(uk_map),add = TRUE,border="black")
+contour(masked_kde2,add = TRUE,col="blue")
 
 # converts to raster
 kde <- raster(kde.output)
