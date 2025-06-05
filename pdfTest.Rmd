@@ -25,7 +25,13 @@ library(httr)      # for getting data using inat and WoRMS API's
 library(lubridate) # for date conversion
 library(jsonlite)  # for getting WoRMS data
 library(dplyr)     # for WoRMS data
+library(ggtext)
+library(showtext)
+library(utils)
 
+font_add_google("Montserrat", "mont")
+font_add_google("Chivo", "chivo")
+showtext_auto()
 ```
 
 
