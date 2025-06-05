@@ -78,7 +78,7 @@ uk_map <- ne_countries(
   scale = "medium",
   returnclass = "sf"
 ) %>%
-  filter(admin %in% c("United Kingdom", "Ireland"))
+  filter(admin %in% c("United Kingdom", "Ireland","Channel Islands"))
 
 plot4 <- ggplot() +
   geom_sf(data = uk_map, fill = "whitesmoke", colour = "grey50") +
@@ -146,7 +146,65 @@ library("viridis")           # Load
 
 df = data.frame(NatBioBlitz_iNat$longitude,NatBioBlitz_iNat$latitude)
 s = SpatialPoints(df)
-s = kde.output <- kernelUD(s,h="href", grid = 1000)
+kde.output <- kernelUD(s,h="href", grid = 1000)
 plot(kde.output,col=viridis(500, begin = 0, end = 1, direction = 1))
 plot(st_geometry(obs_points), add=TRUE, pch=16, col=8, cex=0.5)
 plot(st_geometry(uk_map),add = TRUE,border="black")
+
+bounding_box = st_geometry(uk_map)
+plot(bounding_box)
+
+coords = matrix(c(78.46801, 19.53407,
+                  78.46801, 19.74557,
+                  78.83157, 19.74557,
+                  78.83157, 19.53407,
+                  78.46801, 19.53407), 
+                ncol = 2, byrow = TRUE)
+
+
+P1 = Polygon(coords)
+Ps1 = SpatialPolygons(list(Polygons(list(P1), ID = "a")), proj4string=CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
+plot(Ps1, axes = TRUE)
+
+
+e <- as(raster::extent(
+  -9,
+  4,
+  45,
+  65
+  ), "SpatialPolygons")
+proj4string(e) <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+plot(e,axes = TRUE,add = TRUE)
+
+dev.off()
+
+plot(masked_kde2,col=viridis(500, begin = 0, end = 1, direction = 1),
+     xlim=c(-11,3),ylim=c(48.5,61.5),axes=TRUE)
+
+plot(kde.output,col=terrain.colors(500,rev = TRUE),axes=TRUE,
+     xlim=c(-11,3),ylim=c(48.5,61.5))
+
+plot(masked_kde2,col=terrain.colors(500,rev = TRUE),axes=TRUE,
+     xlim=c(-11,3),ylim=c(48.5,61.5))
+
+plot(st_geometry(uk_map),add = TRUE,border="black")
+plot(st_geometry(obs_points), add=TRUE, pch=24, col="black", bg="red", cex=0.7)
+title(main = "Observations")
+
+
+masked_kde2 <- mask(kde, uk_map)
+
+dev.off()
+plot(masked_kde2,col=terrain.colors(500,rev = TRUE),
+     xlim=c(-11,3),ylim=c(50,61),axes=TRUE)
+plot(st_geometry(obs_points), add=TRUE, pch=21, col="blue", cex=0.5)
+plot(st_geometry(uk_map),add = TRUE,border="black")
+
+# converts to raster
+kde <- raster(kde.output)
+# sets projection to British National Grid
+projection(kde) <- CRS("+init=EPSG:27700")
+#######################
+
+
+# End
