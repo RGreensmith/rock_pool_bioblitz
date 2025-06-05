@@ -1,0 +1,498 @@
+---
+title: "Big Rock Pool Challenge - National BioBlitz 2025 – Final Report"
+author: "The Rock Pool Project"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    includes:
+      in_header: report-header.tex
+fontsize: 10pt
+mainfont: Montserrat
+sansfont: Chivo
+monofont: Courier New
+geometry: a4paper, top=30mm, bottom=20mm, left=20mm, right=20mm
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.width = 8,
+  fig.height = 5
+)
+
+library(ggplot2)
+library(dplyr)
+library(showtext)
+library(ggtext)
+library(ggimage)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(knitr)
+
+library(rinat)     # using wrapper for downloading data
+library(httr)      # for getting data using inat and WoRMS API's
+library(lubridate) # for date conversion
+library(jsonlite)  # for getting WoRMS data
+library(dplyr)     # for WoRMS data
+library(utils)
+
+library(sf)       # for setting up the layers to map
+library(sp)       # for setting up the layers to map
+library(adehabitatHR) # for setting up the layers to map
+library(raster)   # for setting up the layers to map
+
+# Fonts for plots
+font_add_google("Montserrat", "mont")
+font_add_google("Chivo", "chivo")
+showtext_auto()
+```
+
+```{r data_load}
+load("NatBioBlitz_iNat20250604.RData") #iNat BioBlitz Data as of 4th June 2025
+
+```
+
+\begin{center}
+\includegraphics[width=0.8\textwidth]{images/natbioadvert.png}
+
+\includegraphics[width=0.8\textwidth]{images/BRPC Funders and Partner logos.png}
+\end{center}
+
+\newpage
+
+
+
+# Executive Summary
+
+A brief overview of the National BioBlitz 2025: aims, reach, and key achievements. Include highlights and a general snapshot of participation.
+
+\newpage
+
+
+
+# About the National BioBlitz
+
+The [National BioBlitz 2025](https://www.therockpoolproject.co.uk/national-bioblitz) was a UK-wide citizen science initiative coordinated by The Rock Pool Project, aimed at engaging people across the country in discovering and recording the biodiversity of our rocky shores.
+
+Held between 17th and 25th May 2025, the event empowered individuals, families, and wildlife groups to take part in a shared national effort to explore intertidal habitats and contribute meaningful data to marine research and conservation.
+
+Participants of all ages and backgrounds visited their local coastlines to record the species they found in rock pools and along the shore. Whether seasoned naturalists or first-time explorers, everyone played a role in helping to build a clearer picture of the UK's marine life.
+
+## Data collection
+
+All observations were recorded using [iNaturalist](https://www.inaturalist.org/), a free, community-powered biodiversity recording platform. Participants submitted photographs of their finds, along with the date and location of each observation. These were automatically grouped into a dedicated project: the [National BioBlitz 2025 iNaturalist page](https://www.inaturalist.org/projects/brpc-national-bioblitz-2025), which captured all qualifying submissions made during the event period.
+
+Species identifications were suggested by participants and verified through the iNaturalist community and The Rock Pool Project’s team of marine biologists. This process helped ensure data quality while also offering an accessible learning experience for participants.
+
+The resulting dataset represents a unique, community-generated snapshot of intertidal biodiversity across the UK — supporting long-term research and helping to track changes in species distributions, including the spread of marine non-natives.
+
+
+
+## Headline Statistics
+
+```{r overall-summary}
+# Placeholder for total counts and an icon-based infographic
+data_summary <- data.frame(
+  category = c("Observers", "Records", "Species"),
+  value = c(NA, NA, NA) # Fill with actual numbers
+)
+```
+
+## Geographical Coverage
+
+```{r geo_coverage}
+# Placeholder for map of observations, etc
+```
+
+
+```{r geo_map}
+# Define project ID and API parameters
+project_slug <- "brpc-national-bioblitz-2025-practice"
+
+# Download data using the rinat package
+inat_data <- get_inat_obs_project(project_slug)
+
+# Convert observed_on to date-time for comparison
+inat_data$updated_at <- ymd_hms(inat_data$updated_at)
+inat_data$time_observed_at <- ymd_hms(inat_data$time_observed_at)
+
+last_update <- max(inat_data$updated_at)
+cat("Last update:", as.character(last_update), "\n")
+
+saved_data_path <- "../NatBioBlitz_iNat.RData"
+
+if (file.exists(saved_data_path)) {
+  load(saved_data_path)
+} else {
+  source("scripts/new get project obs function.R")
+  NatBioBlitz_iNat <- get_inat_obs_project_v2("brpc-national-bioblitz-2025")
+  save(NatBioBlitz_iNat, file = saved_data_path)
+}
+
+location_split <- strsplit(NatBioBlitz_iNat$location, ",")
+location_df <- do.call(
+  rbind,
+  lapply(location_split, function(x) as.numeric(x))
+)
+colnames(location_df) <- c("latitude", "longitude")
+
+NatBioBlitz_iNat <- cbind(NatBioBlitz_iNat, location_df) %>%
+  filter(!is.na(latitude), !is.na(longitude))
+
+obs_points <- st_as_sf(
+  NatBioBlitz_iNat,
+  coords = c("longitude", "latitude"),
+  crs = 4326
+)
+
+
+## UK Map ##
+
+uk_map <- ne_countries(
+  scale = "medium",
+  returnclass = "sf"
+) %>%
+  filter(admin %in% c("United Kingdom", "Ireland","Isles of Scilly"))
+
+# Create colour ramp for kernel density estimation of observations
+# using The Rock Pool Project brand colours
+fun_colour_range <- colorRampPalette(c("#FFFFFF","#00A6FB", "#4D56F5","#191D2D"))   
+my_colours <- fun_colour_range(1000)  
+
+# Setting up the layers to map
+df = data.frame(as.numeric(NatBioBlitz_iNat$longitude),
+                as.numeric(NatBioBlitz_iNat$latitude))
+s = SpatialPoints(df)
+kde.output <- kernelUD(s,h="href", grid = 1000)
+# kde.output <- density(s,h="href", grid = 1000)
+# converts to raster
+kde <- raster(kde.output)
+# sets projection to British National Grid
+projection(kde) <- CRS("+init=EPSG:27700")
+
+masked_kde <- mask(kde, uk_map)
+
+plot(masked_kde,col=my_colours,axes=TRUE,
+     xlim=c(-11,3),ylim=c(48.5,61.5))
+plot(st_geometry(uk_map),add = TRUE,border="#191d2d")
+plot(st_geometry(obs_points), add=TRUE, pch=24, cex=0.7,
+     col="#191d2d",bg="#00a6fb")
+title(main = "Observations")
+
+```
+
+
+\newpage
+
+# Regional Summaries
+
+Repeat the following structure for each region (e.g. South West, Wales):
+
+## South West Region
+
+- Total observations: _X_
+- Unique participants: _Y_
+- Most recorded species: _Z_
+
+Individual League table - highlight t shirt winner
+
+```{r regional-plot-sw}
+# Placeholder for regional bar chart or map
+```
+
+\newpage
+
+# Individual Feedback (optional)
+
+Tailor info for a specific individual
+
+## Example User Summary
+
+- Total records: _X_
+- Species recorded: _Y_
+- Non-native species: _Z_
+
+top species
+
+```{r individual-feedback-example}
+# Placeholder for individual bar/tile chart
+```
+
+\newpage
+
+# Non-native Species Results
+
+## Summary from the National BioBlitz
+
+Overview of the non-native species found
+
+```{r nn-summary}
+# Placeholder for top non-native species chart
+```
+
+
+```{r bioblitzdata}
+# Define project ID and API parameters
+project_slug <- "brpc-national-bioblitz-2025-practice"
+
+# Download data using the rinat package
+inat_data <- get_inat_obs_project(project_slug)
+
+# Convert observed_on to date-time for comparison
+inat_data$updated_at <- ymd_hms(inat_data$updated_at)
+inat_data$time_observed_at <- ymd_hms(inat_data$time_observed_at)
+
+last_update <- max(inat_data$updated_at)
+```
+
+```{r wormsdata}
+# Create empty columns to bind with the inat_data dataframe for the new taxonomic data
+taxon.kingdom = rep(NA, times = length(inat_data[,1]))
+taxon.phylum = rep(NA, times = length(inat_data[,1]))
+taxon.class = rep(NA, times = length(inat_data[,1]))
+taxon.order = rep(NA, times = length(inat_data[,1]))
+taxon.family = rep(NA, times = length(inat_data[,1]))
+marine = rep(NA, times = length(inat_data[,1]))
+brackish = rep(NA, times = length(inat_data[,1]))
+freshwater = rep(NA, times = length(inat_data[,1]))
+terrestrial = rep(NA, times = length(inat_data[,1]))
+
+# Combine the inat_data dataframe with the new columns
+inat_data = cbind(
+  inat_data,taxon.kingdom,taxon.phylum,taxon.class,taxon.order,taxon.family,
+  marine,brackish,freshwater,terrestrial)
+
+# Fill in new inat_data columns with taxonomic information from WoRMS
+l = length(inat_data[,1])
+for (a in 1:l) {
+  if (
+    is.na(inat_data$taxon.rank[a])==FALSE && inat_data$taxon.rank[a]=="species"
+    ){
+    
+    # Split the scientific name into two character objects: genus and species
+    binomClassNm = inat_data$taxon.name[a]
+    binomClassNmSplit = strsplit(binomClassNm,"[ ]")
+    
+    genus = binomClassNmSplit[[1]][1]
+    species = binomClassNmSplit[[1]][2]
+    
+    # Paste the genus and species names into the WoRMS API key and download relevant data
+    api = paste("https://www.marinespecies.org/rest/AphiaRecordsByName/",
+                genus,
+                "%20",
+                species,
+                "?like=true&marine_only=false&extant_only=true&offset=1",
+                sep = "")
+    taxonInfo = GET(api)
+    taxonInfoContent = httr::content(taxonInfo, as = 'text')
+    
+    # Populate the new columns with taxonomic data downloaded from WoRMS
+    if(object.size(taxonInfoContent)>112) {
+      taxonInfoContentJSON = jsonlite::fromJSON(taxonInfoContent)
+      
+      inat_data$taxon.kingdom[a] = taxonInfoContentJSON$kingdom[1]
+      inat_data$taxon.phylum[a] = taxonInfoContentJSON$phylum[1]
+      inat_data$taxon.class[a] = taxonInfoContentJSON$class[1]
+      inat_data$taxon.order[a] = taxonInfoContentJSON$order[1]
+      inat_data$taxon.family[a] = taxonInfoContentJSON$family[1]
+      
+      if(is.na(taxonInfoContentJSON$isMarine[1])==FALSE) {
+        inat_data$marine[a] = taxonInfoContentJSON$isMarine[1]
+      }
+      if(is.na(taxonInfoContentJSON$isBrackish[1])==FALSE) {
+        inat_data$brackish[a] = taxonInfoContentJSON$isBrackish[1]
+      }
+      if(is.na(taxonInfoContentJSON$isFreshwater[1])==FALSE) {
+        inat_data$freshwater[a] = taxonInfoContentJSON$isFreshwater[1]
+      }
+      if(is.na(taxonInfoContentJSON$isTerrestrial[1])==FALSE) {
+        inat_data$terrestrial[a] = taxonInfoContentJSON$isTerrestrial[1]
+      }
+    } else {
+      inat_data$taxon.kingdom[a] = "taxon info not retrieved"
+    }
+  }
+}
+
+```
+
+
+```{r nonnativelist}
+# Load the non-native species list
+non_native_species <- read.csv("Data/UK marine NNS.csv")
+
+# Match observations against non-native species list
+natbioblitz_nns <- subset(inat_data, taxon.id  %in% non_native_species$inat_id)
+```
+
+```{r pressure}
+# Define plot title names
+plotTitles=c("Class","Phylum","Kingdom")
+
+# Start new plot device and define number of plotting regions
+par(mfrow=c(1,3))
+
+# Create the bar plots. The Loop index numbers are backwards for ease of defining inat_data column reference number whilst also allowing for the plotting of Kingdom in the left-hand plotting region and Class in the right-hand plotting region).
+for (a in 3:1){
+  # Filter out the non-terrestrial species data and species not identified to species level
+  inat_data_filtered = inat_data
+  inat_data_filtered = filter(inat_data_filtered,
+                              marine == 1 | brackish == 1 | freshwater ==1)
+  
+  # Define column reference number for the name of each taxa group for each of the three ranks
+  colRefINat_data_filtered=length(inat_data_filtered)-(5+a)
+  
+  # Sort each of the names alphabetically to allow accurate matching when native and non-native species tables are combined
+  taxonNames = sort(unique(
+    inat_data_filtered[,colRefINat_data_filtered]))
+  
+  # Create empty matrix for bar plot data
+  df = matrix(0,nrow=1,ncol=length(taxonNames))
+  colnames(df)=taxonNames
+  rownames(df)=c("nonNative")
+  
+  # Define column reference number for the name of each taxa group
+  colRefNatbioblitz_nns = length(natbioblitz_nns)-(5+a)
+  
+  # Create frequency tables for native and non-native species
+  nativeTable = table(inat_data_filtered[,colRefINat_data_filtered])
+  nonNativeTable = table(natbioblitz_nns[,colRefNatbioblitz_nns])
+  
+  # Populate the empty matrix for bar plot data with frequency values of each non-native species from the non-native species frequency table
+  for (b in 1:ncol(df)){
+    for (c in 1:length(dimnames(nonNativeTable)[[1]])){
+      if (colnames(df)[b] == dimnames(nonNativeTable)[[1]][c]){
+        df[b] = nonNativeTable[c]
+      }
+    }
+  }
+  
+  # Re-define the matrix object as having the rows from the native species frequency table bound to the rows of the matrix (now populated with non-native species frequencies of occurrence)
+  df = rbind(nativeTable,df)
+  
+  # Subtract the non-native species frequencies from the native species frequency row
+  for (d in 1:ncol(df)) {
+    df[1,d] = df[1,d]-df[2,d]
+  }
+  
+  # Setting margins for each plot individually
+  if (a==3) {
+    par(mar=c(8,5.5,4.5,6)+0.1,xpd=TRUE) # (Kingdom)
+  } else if (a==2){
+    par(mar=c(8,1.0,4.5,4)+0.1,xpd=TRUE)# (Phylum)
+  } else if (a==1){
+    par(mar=c(8,3.0,4.5,1)+0.1,xpd=TRUE)# (Class)
+  }
+  
+  # Plot the bar plot
+  barplot(df, 
+          col=c("#00a6fb","#F79824"), 
+          horiz = TRUE, cex.names = 1.1,las = 1,border = FALSE, 
+          space=0.03,
+          font.axis=1,
+          cex.axis = 1.1,
+          cex.lab = 1.1, 
+          xlab="Number of records",
+          col.lab =c("#191d2d"))
+  
+  # Plot titles
+  mtext(paste(plotTitles[a],sep=""),
+        side = 3, adj = 0, line = -1,cex = 1.15,col=c("#191d2d"),font = 1.2)
+  
+  # Legend
+  if(a==2){
+    legend("topright", inset = c(0.01, 1.15),
+           fill = c("#00a6fb","#F79824"),
+           legend=c("Native species",
+                    "Non-native species"), horiz = TRUE,cex = 1.1,border = FALSE)
+  }
+}
+
+# Outer plot title
+mtext("Number of non-terrestrial records identified to species level",
+      side = 3, line = -2.5, outer = TRUE,col = c("#191d2d"),font = 2,cex = 1.4)
+
+# Plot subtitle
+last_update <- max(inat_data$updated_at)
+mtext(paste("Last update:",last_update,sep = " "),side = 3, line = -3.7,
+      outer = TRUE,col = c("#0e6bff"),
+      cex = 0.8,font = 3)
+
+# Add a two tone border
+box("outer", col="#0e6bff",lwd=7)
+```
+
+## Comparison with NBN Atlas Baseline
+
+ - Which species were found in unusual places?
+ - Which species weren't found in places they would be expected to be found?
+
+```{r nn-comparison}
+# Placeholder for before/after maps or bar charts
+```
+
+\newpage
+
+# Species Highlights
+
+- Rarest record
+- Best photo submission
+- Noteworthy range extension
+
+```{r highlights}
+# Placeholder for image collage or featured species panel
+```
+
+
+\newpage
+
+# Project Partners and Support
+
+Thank you to all our partners, volunteers, and funders.
+
+ADD PARTNER LOGOS HERE
+
+\newpage
+
+# Next Steps: How to Stay Involved
+
+## 1. Join or Start a Rock Pool Hub
+- Get involved locally or start your own hub with our support.
+
+## 2. Keep Recording on iNaturalist
+- Every observation adds to the UK marine picture.
+
+## 3. Seasonal Challenges
+- Look out for themed events and mini-BioBlitzes.
+
+## 4. Follow & Tag Us
+- Stay connected via social media: [@therockpoolproject](https://www.instagram.com/therockpoolproject)
+
+## 5. Volunteer or Collaborate
+- Run events, support schools, or partner with us.
+
+## 6. Sign Up for Updates
+- Visit [www.therockpoolproject.co.uk](https://www.therockpoolproject.co.uk)
+
+\newpage
+
+# Appendices
+
+## Species List
+
+```{r species-table}
+# Placeholder for table of all recorded species
+```
+
+## Methodology Notes
+
+Details on data collection, validation, and tools used.
+
+## Data Use Statement
+
+Explanation of how participant and observation data are used, stored, and shared.

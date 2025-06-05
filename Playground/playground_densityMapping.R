@@ -78,7 +78,7 @@ uk_map <- ne_countries(
   scale = "medium",
   returnclass = "sf"
 ) %>%
-  filter(admin %in% c("United Kingdom", "Ireland","Channel Islands"))
+  filter(admin %in% c("United Kingdom", "Ireland","Channel Islands","France"))
 
 plot4 <- ggplot() +
   geom_sf(data = uk_map, fill = "whitesmoke", colour = "grey50") +
@@ -213,7 +213,91 @@ contour(masked_kde2,add = TRUE,col="blue")
 kde <- raster(kde.output)
 # sets projection to British National Grid
 projection(kde) <- CRS("+init=EPSG:27700")
-#######################
+
+################################################################################
+ # Putting code together to make the observation density map #
+################################################################################
+
+# Define project ID and API parameters
+project_slug <- "brpc-national-bioblitz-2025-practice"
+
+# Download data using the rinat package
+inat_data <- get_inat_obs_project(project_slug)
+
+# Convert observed_on to date-time for comparison
+inat_data$updated_at <- ymd_hms(inat_data$updated_at)
+inat_data$time_observed_at <- ymd_hms(inat_data$time_observed_at)
+
+last_update <- max(inat_data$updated_at)
+cat("Last update:", as.character(last_update), "\n")
+
+saved_data_path <- "../NatBioBlitz_iNat.RData"
+
+if (file.exists(saved_data_path)) {
+  load(saved_data_path)
+} else {
+  source("scripts/new get project obs function.R")
+  NatBioBlitz_iNat <- get_inat_obs_project_v2("brpc-national-bioblitz-2025")
+  save(NatBioBlitz_iNat, file = saved_data_path)
+}
+
+location_split <- strsplit(NatBioBlitz_iNat$location, ",")
+location_df <- do.call(
+  rbind,
+  lapply(location_split, function(x) as.numeric(x))
+)
+colnames(location_df) <- c("latitude", "longitude")
+
+NatBioBlitz_iNat <- cbind(NatBioBlitz_iNat, location_df) %>%
+  filter(!is.na(latitude), !is.na(longitude))
+
+obs_points <- st_as_sf(
+  NatBioBlitz_iNat,
+  coords = c("longitude", "latitude"),
+  crs = 4326
+)
 
 
+## UK Map ##
+
+uk_map <- ne_countries(
+  scale = "medium",
+  returnclass = "sf"
+) %>%
+  filter(admin %in% c("United Kingdom", "Ireland","Isles of Scilly"))
+
+
+library(sf) #
+library(sp) # for setting up the layers to map
+library(adehabitatHR)
+library(raster)
+
+# Create colour ramp for kernel density estimation of observations
+# using The Rock Pool Project brand colours
+fun_colour_range <- colorRampPalette(c("#FFFFFF","#00A6FB", "#4D56F5","#191D2D"))   
+my_colours <- fun_colour_range(1000)  
+
+# Setting up the layers to map
+df = data.frame(as.numeric(NatBioBlitz_iNat$longitude),
+                as.numeric(NatBioBlitz_iNat$latitude))
+s = SpatialPoints(df)
+kde.output <- kernelUD(s,h="href", grid = 1000)
+# converts to raster
+kde <- raster(kde.output)
+# sets projection to British National Grid
+projection(kde) <- CRS("+init=EPSG:27700")
+
+masked_kde <- mask(kde, uk_map)
+
+plot(masked_kde,col=my_colours,axes=TRUE,
+     xlim=c(-11,3),ylim=c(48.5,61.5))
+plot(st_geometry(uk_map),add = TRUE,border="#191d2d")
+plot(st_geometry(obs_points), add=TRUE, pch=24, cex=0.7,
+     col="#191d2d",bg="#00a6fb")
+title(main = "Observations")
+
+
+
+################################################################################
 # End
+################################################################################
