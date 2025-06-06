@@ -169,7 +169,6 @@ df = data.frame(as.numeric(NatBioBlitz_iNat$longitude),
                 as.numeric(NatBioBlitz_iNat$latitude))
 s = SpatialPoints(df)
 kde.output <- kernelUD(s,h="href", grid = 1000)
-# kde.output <- density(s,h="href", grid = 1000)
 # converts to raster
 kde <- raster(kde.output)
 # sets projection to British National Grid
@@ -229,7 +228,9 @@ top species
 
 ## Summary from the National BioBlitz
 
-Overview of the non-native species found
+### Overview of the non-native species found
+
+#### Taxonomic breakdown of native and non-native species
 
 ```{r nn-summary}
 # Placeholder for top non-native species chart
@@ -330,7 +331,7 @@ non_native_species <- read.csv("Data/UK marine NNS.csv")
 natbioblitz_nns <- subset(inat_data, taxon.id  %in% non_native_species$inat_id)
 ```
 
-```{r pressure}
+```{r stackedBarPlot}
 # Define plot title names
 plotTitles=c("Class","Phylum","Kingdom")
 
