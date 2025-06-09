@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.6.4)  5 JUN 2025 19:31
+This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.6.4)  6 JUN 2025 15:05
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1209,10 +1209,14 @@ File: background.png Graphic file (type bmp)
 File: background.png Graphic file (type bmp)
 <background.png>
 [6]
-File: National-BioBlitz-Final-Report_files/figure-latex/pressure-1.pdf Graphic file (type pdf)
-<use National-BioBlitz-Final-Report_files/figure-latex/pressure-1.pdf>
+LaTeX Font Info:    Font shape `TU/Montserrat(0)/b/n' will be
+(Font)              scaled to size 10.0pt on input line 211.
+LaTeX Font Info:    Font shape `TU/Chivo(0)/b/n' will be
+(Font)              scaled to size 10.2739pt on input line 211.
+File: National-BioBlitz-Final-Report_files/figure-latex/stackedBarPlot-1.pdf Graphic file (type pdf)
+<use National-BioBlitz-Final-Report_files/figure-latex/stackedBarPlot-1.pdf>
 
-Overfull \hbox (94.46169pt too wide) in paragraph at lines 212--212
+Overfull \hbox (94.46169pt too wide) in paragraph at lines 216--216
  [] 
  []
 
@@ -1243,11 +1247,11 @@ L3 programming layer <2025-05-26>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 17297 strings out of 470548
- 323344 string characters out of 5491217
- 859780 words of memory out of 5000000
- 45263 multiletter control sequences out of 15000+600000
- 630671 words of font info for 105 fonts, out of 8000000 for 9000
+ 17304 strings out of 470548
+ 323682 string characters out of 5491217
+ 859920 words of memory out of 5000000
+ 45268 multiletter control sequences out of 15000+600000
+ 630687 words of font info for 107 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  90i,9n,116p,373b,410s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
