@@ -18,8 +18,6 @@ library(sf)       #for simple features
 library(sfdep)    #for spatial analyses
 library(spdep)    #for spatial analyses
 library(tidyr)    #for data manipulation
-library(ggplot2)  #for data visualization
-install.packages("rnbn")
 
 ################################################################################
 # inat data
@@ -89,16 +87,6 @@ taxonInfo = GET(api)
 taxonInfoContent = httr::content(taxonInfo, as = 'text')
 taxonInfoContentJSON = jsonlite::fromJSON(taxonInfoContent)
 
-api2 = "https://records-ws.nbnatlas.org/occurrences/index/download?reasonTypeId=10&q=*:*&fq=genus:Vulpes&lat=51.5074&lon=0.1278&radius=10.0&qa=none"
-taxonInfo2 = GET(api2)
-taxonInfoContent2 = content(taxonInfo2,as="text",type = "application/zip")
-taxonInfoContentJSON2 = readr::read_csv(unzip(taxonInfoContent2))
-a=unzip(taxonInfoContent2)
-a=unz(taxonInfoContent2,filename = "data")
-
-data=read.csv(unz(taxonInfo2,filename = "data.csv",open = "r"))
-unz("C:/Users/Rose/rock_pool_bioblitz/data.zip",filename = "data",open = "")
-
 ###########################################################################
 # records of Sargassum muticum within 100km (radius=100.0) of a point in London
 # api2 = "https://records-ws.nbnatlas.org/occurrences/index/download?reasonTypeId=10&q=*:*&fq=genus:Sargassum&lat=51.5074&lon=0.1278&radius=100.0&qa=none"
@@ -112,4 +100,63 @@ df = readr::read_csv(unz(description = "C:/Users/Rose/rock_pool_bioblitz/data.zi
 df=as.data.frame(df)
 numRecords = length(df[,1])
 ################################################################################
+# Creating data frame for number of inat records at least 1km away from NBN Atlas records
+nnSppCNm=unique(as.character(natbioblitz_nns$taxon.common_name.name))
+nnSppSNm=unique(as.character(natbioblitz_nns$taxon.name))
+recordsInBuffer = matrix(ncol = 4, nrow = length(nnSppCNm))
+recordsInBuffer=as.data.frame(recordsInBuffer)
+row.names(recordsInBuffer)=nnSppSNm
+names(recordsInBuffer)=c("latin_name","NBN_recs_in_inat_buffer",
+                         "total_inat_recs",
+                         "percent_new_recs")
+recordsInBuffer$latin_name = latinName
+
+NBN_recs = rep(NA, times = length(natbioblitz_nns[,1]))
+
+# Combine the inat_data dataframe with the new columns
+natbioblitz_nns = cbind(natbioblitz_nns,NBN_recs)
+
+for (a in 1:length(nnSppSNm)) {
+  natbioblitz_nns_filtered = filter(natbioblitz_nns,
+                                    taxon.name == nnSppSNm[a])
+  binomClassNm = natbioblitz_nns_filtered$taxon.name[1]
+  binomClassNmSplit = strsplit(binomClassNm,"[ ]")
+  genus = binomClassNmSplit[[1]][1]
+  species = binomClassNmSplit[[1]][2]
+  
+  for (b in 1:length(natbioblitz_nns_filtered[,1])) {
+    ####################### Get NBN Atlas Records for each point #################
+    # records of Sargassum muticum within 100km (radius=100.0) of a point in London
+    
+    # Paste the genus and species names into the NBN Atlas API key and download relevant data
+    lat = natbioblitz_nns_filtered$latitude[b]
+    lon = natbioblitz_nns_filtered$longitude[b]
+    
+    api = paste("https://records-ws.nbnatlas.org/occurrences/index/download?reasonTypeId=17&q=*:*&fq=genus:",
+                genus,
+                "&facets=rk_species:",
+                species,
+                "&lat=",
+                lat,
+                "&lon=",
+                lon,
+                "&radius=10.0&qa=none",
+                "&flimit=10",
+                sep = "")
+    taxonInfo = GET(api)
+    
+    download.file(url = api, 
+                  destfile = "C:/Users/Rose/rock_pool_bioblitz/data.zip", 
+                  mode = "wb")
+    dfNBN = readr::read_csv(unz(
+      description = "C:/Users/Rose/rock_pool_bioblitz/data.zip",
+      filename = "data.csv"))
+    dfNBN=as.data.frame(dfNBN)
+    numRecords = length(dfNBN[,1])
+    
+    recordsInBuffer$NBN_recs_in_inat_buffer[a]=recordsInBuffer$NBN_recs_in_inat_buffer[a]+numRecords
+    natbioblitz_nns_filtered$NBN_recs[b]=numRecords
+  }
+}
+#############
 #End
