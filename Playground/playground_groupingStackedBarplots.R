@@ -345,13 +345,13 @@ for (d in 1:ncol(df)) {
 #-------------------------------------------------------------------------------
 # Plot the bar plot
 #-------------------------------------------------------------------------------
-dev.new(width=8, height=5, unit="in", noRStudioGD = TRUE)
-par(mar=c(5,8,2,2)+0.1,xpd=FALSE)
-
 # Fonts for plots
 font_add_google("Montserrat", "mont")
 font_add_google("Chivo", "chivo")
 showtext_auto()
+
+dev.new(width=8, height=5, unit="in", noRStudioGD = TRUE)
+par(mar=c(5,8,3,2)+0.1,xpd=FALSE)
 
 # xlim=c(0,round(max(df),digits = -2))
 
@@ -374,7 +374,7 @@ legend("bottomright", inset = c(0.1),
 
 # Outer plot title
 mtext("Number of non-terrestrial records identified to species level",
-      side = 3, line = -1.5, outer = TRUE,col = c("#191d2d"),font = 2,cex = 1.1,
+      side = 3, line = -2, outer = TRUE,col = c("#191d2d"),font = 2,cex = 1.1,
       family="chivo")
 
 # Add a border
