@@ -424,11 +424,11 @@ nnSppCNm=unique(as.character(natbioblitz_nns$taxon.common_name.name))
 nnSppSNm=unique(as.character(natbioblitz_nns$taxon.name))
 recordsInBuffer = matrix(ncol = 4, nrow = length(nnSppCNm))
 recordsInBuffer=as.data.frame(recordsInBuffer)
-row.names(recordsInBuffer)=nnSppSNm
+row.names(recordsInBuffer)=nnSppCNm
 names(recordsInBuffer)=c("latin_name","NBN_recs_in_inat_buffer",
                              "total_inat_recs",
                              "percent_new_recs")
-recordsInBuffer$latin_name = latinName
+recordsInBuffer$latin_name = nnSppSNm
 
 NBN_recs = rep(NA, times = length(natbioblitz_nns[,1]))
 
