@@ -288,6 +288,10 @@ for (a in 1:length(nonNatives)) {
   binomClassNmSplit = strsplit(binomClassNm,"[ ]")
   genus = binomClassNmSplit[[1]][1]
   species = binomClassNmSplit[[1]][2]
+  
+  # NBN Atlas record filter:
+  #     - No unconfirmed, unconfirmed (not reviewed) or unconfirmed (plausible)
+  #     - No absences
   api=paste("https://records-ws.nbnatlas.org/occurrences/search?",
             "q=*:*&fq=genus:",
             genus,
@@ -307,6 +311,8 @@ for (a in 1:length(nonNatives)) {
   print(paste(nonNatives[a],"=",length(df[,1])))
   bioblitzFiltered = subset(natbioblitz_nns,
                             taxon.name == binomClassNm)
+  
+  ############### Map the sightings from bioblitz and NBN Atlas ################
   plot(st_geometry(uk_map),border="#FFFFFF",axes=TRUE,
        xlim=c(-11,3),ylim=c(49,61),
        family="mont",col="#E4E6F6")
