@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.6.4)  6 JUN 2025 15:05
+This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.6.4)  11 JUN 2025 15:32
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1180,12 +1180,37 @@ LaTeX Font Info:    Font shape `TU/Montserrat(0)/b/n' will be
 (Font)              scaled to size 12.0pt on input line 130.
 LaTeX Font Info:    Font shape `TU/Chivo(0)/b/n' will be
 (Font)              scaled to size 12.32867pt on input line 130.
-LaTeX Font Info:    Font shape `TU/CourierNew(0)/m/n' will be
-(Font)              scaled to size 12.41562pt on input line 156.
-File: National-BioBlitz-Final-Report_files/figure-latex/geo_map-1.pdf Graphic file (type pdf)
-<use National-BioBlitz-Final-Report_files/figure-latex/geo_map-1.pdf>
 
-Overfull \hbox (94.46169pt too wide) in paragraph at lines 160--160
+
+File: background.png Graphic file (type bmp)
+<background.png>
+[3]
+LaTeX Font Info:    Font shape `TU/Montserrat(0)/m/it' will be
+(Font)              scaled to size 10.0pt on input line 167.
+
+
+File: background.png Graphic file (type bmp)
+<background.png>
+[4]
+
+File: background.png Graphic file (type bmp)
+<background.png>
+[5]
+LaTeX Font Info:    Font shape `TU/Montserrat(0)/b/n' will be
+(Font)              scaled to size 10.0pt on input line 205.
+LaTeX Font Info:    Font shape `TU/Chivo(0)/b/n' will be
+(Font)              scaled to size 10.2739pt on input line 205.
+File: National-BioBlitz-Final-Report_files/figure-latex/bioblitzdata-1.pdf Graphic file (type pdf)
+<use National-BioBlitz-Final-Report_files/figure-latex/bioblitzdata-1.pdf>
+
+Overfull \hbox (94.46169pt too wide) in paragraph at lines 210--210
+ [] 
+ []
+
+File: National-BioBlitz-Final-Report_files/figure-latex/nn-comparison-1.pdf Graphic file (type pdf)
+<use National-BioBlitz-Final-Report_files/figure-latex/nn-comparison-1.pdf>
+
+Overfull \hbox (94.46169pt too wide) in paragraph at lines 224--224
  [] 
  []
 
@@ -1193,30 +1218,11 @@ Overfull \hbox (94.46169pt too wide) in paragraph at lines 160--160
 
 File: background.png Graphic file (type bmp)
 <background.png>
-[3]
-
-File: background.png Graphic file (type bmp)
-<background.png>
-[4]
-LaTeX Font Info:    Font shape `TU/Montserrat(0)/m/it' will be
-(Font)              scaled to size 10.0pt on input line 173.
-
-
-File: background.png Graphic file (type bmp)
-<background.png>
-[5]
-
-File: background.png Graphic file (type bmp)
-<background.png>
 [6]
-LaTeX Font Info:    Font shape `TU/Montserrat(0)/b/n' will be
-(Font)              scaled to size 10.0pt on input line 211.
-LaTeX Font Info:    Font shape `TU/Chivo(0)/b/n' will be
-(Font)              scaled to size 10.2739pt on input line 211.
-File: National-BioBlitz-Final-Report_files/figure-latex/stackedBarPlot-1.pdf Graphic file (type pdf)
-<use National-BioBlitz-Final-Report_files/figure-latex/stackedBarPlot-1.pdf>
+File: National-BioBlitz-Final-Report_files/figure-latex/nn-comparison-2.pdf Graphic file (type pdf)
+<use National-BioBlitz-Final-Report_files/figure-latex/nn-comparison-2.pdf>
 
-Overfull \hbox (94.46169pt too wide) in paragraph at lines 216--216
+Overfull \hbox (94.46169pt too wide) in paragraph at lines 226--226
  [] 
  []
 
@@ -1240,19 +1246,23 @@ File: background.png Graphic file (type bmp)
 
 File: background.png Graphic file (type bmp)
 <background.png>
-[11] (./National-BioBlitz-Final-Report.aux)
+[11]
+
+File: background.png Graphic file (type bmp)
+<background.png>
+[12] (./National-BioBlitz-Final-Report.aux)
  ***********
 LaTeX2e <2025-06-01>
 L3 programming layer <2025-05-26>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 17304 strings out of 470548
- 323682 string characters out of 5491217
- 859920 words of memory out of 5000000
- 45268 multiletter control sequences out of 15000+600000
- 630687 words of font info for 107 fonts, out of 8000000 for 9000
+ 17311 strings out of 470548
+ 324379 string characters out of 5491217
+ 858921 words of memory out of 5000000
+ 45275 multiletter control sequences out of 15000+600000
+ 630679 words of font info for 106 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  90i,9n,116p,373b,410s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on National-BioBlitz-Final-Report.pdf (11 pages).
+Output written on National-BioBlitz-Final-Report.pdf (12 pages).
